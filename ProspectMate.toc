@@ -1,0 +1,12 @@
+## Title: ProspectMate
+## Version: 1.0
+## Author: Mor'Qua Devs
+
+## Interface: 100100
+
+## Notes: A simple addon to track ore prospecting, herb milling and cloth unraveling results.
+
+## SavedVariables: SmartProspectorDB
+
+ProspectMate.lua
+ProspectMateGUI.lua
