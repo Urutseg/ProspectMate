@@ -34,7 +34,7 @@ local function getTrackedReagentCounts()
 
   for _, itemId in ipairs(trackedReagents) do
     local count = GetItemCount(itemId, true, false, true)
-    print("Counted " .. itemId .. " " .. count)
+    -- print("Counted " .. itemId .. " " .. count)
     counts[itemId] = count
   end
 
@@ -49,7 +49,7 @@ local function findChangedItems(oldCounts, newCounts)
     -- If we consumed something it's the thing we were prospecting
     if newCount and newCount < oldCount then
       table.insert(changedItems, itemId)
-      print("Detected change for " .. itemId)
+      -- print("Detected change for " .. itemId)
     end
   end
 
@@ -58,7 +58,7 @@ end
 
 local function updateSmartProspectorDB()
   for _, consumedItemID in pairs(consumedItems) do
-    print("Updating counts for " .. tostring(consumedItemID))
+    -- print("Updating counts for " .. tostring(consumedItemID))
     for itemId, quantity in pairs(prospectResults) do
       if SmartProspectorDB[consumedItemID] == nil then
         SmartProspectorDB[consumedItemID] = {}
@@ -107,14 +107,14 @@ function frame:TRADE_SKILL_CRAFT_BEGIN(event, spellID)
   isTracked = isInTable(trackedSpells, spellID)
   if isTracked then
     local spellName = GetSpellName(spellID)
-    print("Doing trackable " .. spellName)
-    print("counts before crafting")
+    -- print("Doing trackable " .. spellName)
+    -- print("counts before crafting")
     preCraftCounts = getTrackedReagentCounts()
   end
 end
 
 local function updateSmartProspectorDBDelayed()
-  print("counts after crafting")
+  -- print("counts after crafting")
   -- Get postCraftCounts and consumedItems
   postCraftCounts = getTrackedReagentCounts()
   consumedItems = findChangedItems(preCraftCounts, postCraftCounts)
@@ -123,9 +123,9 @@ local function updateSmartProspectorDBDelayed()
 end
 
 function frame:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellID)
-  print("did a cast")
+  -- print("did a cast")
   if isTracked then
-    print("did a trackable cast" .. tostring(spellID))
+    -- print("did a trackable cast" .. tostring(spellID))
 
     -- Check if the spell cast is a tracked spell
     if isInTable(trackedSpells, spellID) then

@@ -1,5 +1,4 @@
 local addonName, addonTable = ...
-local frame = CreateFrame("FRAME", "ProspectMateFrame")
 
 -- Create the main frame for the table
 local frame = CreateFrame("Frame", "ProspectMateFrame", UIParent, "UIPanelDialogTemplate")
