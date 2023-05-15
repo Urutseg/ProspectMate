@@ -49,30 +49,11 @@ local function UpdateUIFrame(frame)
                     prospectingResults = prospectingResults .. itemName .. ": " .. count .. "\n"
                 end
             end
-            
-            -- Create an icon texture
-            local rowIcon = frame:CreateTexture(nil, "OVERLAY")
-            table.insert(uiElements, rowIcon) -- Add the texture to the list of UI elements
-            rowIcon:SetSize(20, 20)
-            rowIcon:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, 0)
-
-            -- Set the texture for the icon
-            rowIcon:SetTexture(itemTexture)
-
-            -- Add a tooltip to the icon
-            rowIcon:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetItemByID(itemID)
-                GameTooltip:Show()
-            end)
-            rowIcon:SetScript("OnLeave", function(self)
-                GameTooltip:Hide()
-            end)
 
             -- Create a table row
             local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
             table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
-            rowData:SetPoint("TOPLEFT", rowIcon, "TOPRIGHT", 10, 0)
+            rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, 0)
             rowData:SetWidth(columnWidths.rowValue)
             rowData:SetText(prospectingResults)
 
