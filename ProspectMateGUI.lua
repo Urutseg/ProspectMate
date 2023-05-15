@@ -10,9 +10,10 @@ frame:SetMovable(true) -- Make the frame movable
 frame:EnableMouse(true) -- Allow the user to interact with the frame
 
 -- Create a title bar for the frame
-frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-frame.title:SetPoint("LEFT", frame.TitleBg, "LEFT", 5, 0)
-frame.title:SetText("ProspectMate")
+frame.Title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+frame.Title:SetPoint("TOP", frame, "TOP", 0, -10)
+frame.Title:SetText("ProspectMate")
+
 
 -- Set up the drag functionality for the frame
 frame:SetScript("OnMouseDown", function(self, button)
@@ -28,12 +29,12 @@ end)
 
 -- Create the scroll frame for the table
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
-scrollFrame:SetSize(480, 320)
+scrollFrame:SetSize(460, 320)
 scrollFrame:SetPoint("TOPLEFT", 10, -70)
 
 -- Create the child frame for the table
 local childFrame = CreateFrame("Frame", "ProspectMateChildFrame", scrollFrame)
-childFrame:SetSize(480, 320)
+childFrame:SetSize(460, 320)
 
 -- Add the child frame to the scroll frame
 scrollFrame:SetScrollChild(childFrame)
