@@ -5,8 +5,8 @@ local uiElements = {}
 
 -- Set column widths
 local columnWidths = {
-    rowHeader = 100,
-    rowValue = 150,
+    rowHeader = 150,
+    rowValue = 200,
 }
 
 -- Function to clear existing UI elements
@@ -19,13 +19,13 @@ local function ClearUIElements()
     uiElements = {} -- Clear the uiElements table
 end
 
-local function CreateRowHeader(frame, yOffset, oreName)
+local function CreateRowHeader(frame, yOffset, oreLink)
     local rowHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     table.insert(uiElements, rowHeader) -- Add the font string to the list of UI elements
 
     rowHeader:SetPoint("TOPLEFT", 10, yOffset)
     rowHeader:SetWidth(columnWidths.rowHeader)
-    rowHeader:SetText(oreName)
+    rowHeader:SetText(oreLink)
 
     return rowHeader
 end
@@ -35,34 +35,31 @@ local function UpdateUIFrame(frame)
     ClearUIElements()
 
     -- Loop through the prospecting data and add rows to the table
-    local yOffset = -30
+    local yOffsetHeader = 0
     for oreID, results in pairs(SmartProspectorDB) do
-        local oreName = GetItemInfo(oreID)
+        local oreName, oreLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(oreID)
         if oreName then
-            local rowHeader = CreateRowHeader(frame, yOffset, oreName)
-            
-            local itemName, itemTexture
-            local prospectingResults = ""
+            local rowHeader = CreateRowHeader(frame, yOffsetHeader, oreLink)
+            local yOffsetRow = 0
             for itemID, count in pairs(results) do
-                itemName, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
+                local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
                 if itemName then
-                    prospectingResults = prospectingResults .. itemName .. ": " .. count .. "\n"
+
+                    local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                    table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
+                    rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
+                    rowData:SetWidth(columnWidths.rowValue)
+                    rowData:SetText(itemLink .. ": " .. count)
+
+                    -- Calculate the dynamic yOffset based on the font string height
+                    local _, rowItemHeight = rowData:GetFont()
+                    yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
+                    yOffsetRow = yOffsetRow - rowItemHeight - 5 -- Adjust the value based on your font size
                 end
             end
 
-            -- Create a table row
-            local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-            table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
-            rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, 0)
-            rowData:SetWidth(columnWidths.rowValue)
-            rowData:SetText(prospectingResults)
-
-            -- Calculate the dynamic yOffset based on the number of newline characters
-            local numLines = rowData:GetNumLines()
-            yOffset = yOffset - (numLines * 15) -- Adjust the value (15) based on your font size and spacing
-
             -- Increase the yOffset by an additional value to add some padding between rows
-            yOffset = yOffset - 5 -- Adjust the value as needed
+            yOffsetHeader = yOffsetHeader - 5 -- Adjust the value as needed
         end
     end
 end
@@ -101,6 +98,16 @@ refreshButton:SetSize(100, 25)
 refreshButton:SetPoint("BOTTOMRIGHT", -10, 10)
 refreshButton:SetText("Refresh")
 
+-- Create the header row for the table
+local headerRow = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+headerRow:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -40)
+headerRow:SetWidth(columnWidths.rowHeader)
+headerRow:SetText("|cff00ccffOre Item|r")
+
+local headerRow2 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+headerRow2:SetPoint("TOPLEFT", headerRow, "TOPRIGHT", 10, 0)
+headerRow2:SetWidth(columnWidths.rowValue)
+headerRow2:SetText("|cff00ccffProspecting Results|r")
 
 -- Create the scroll frame for the table
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
@@ -113,16 +120,6 @@ childFrame:SetSize(460, 320)
 
 -- Add the child frame to the scroll frame
 scrollFrame:SetScrollChild(childFrame)
-
--- Create the header row for the table
-local headerRow = childFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-headerRow:SetPoint("TOPLEFT", childFrame, "TOPLEFT", 10, -10)
-headerRow:SetText("|cff00ccffOre Item|r")
-
-local headerRow2 = childFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-headerRow2:SetPoint("TOPLEFT", headerRow, "TOPRIGHT", 10, 0)
-headerRow2:SetText("|cff00ccffProspecting Results|r")
-
 
 UpdateUIFrame(childFrame)
 
