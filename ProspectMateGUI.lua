@@ -12,12 +12,18 @@ local columnWidths = {
 -- Function to clear existing UI elements
 local function ClearUIElements()
     for _, element in ipairs(uiElements) do
-        element:SetText("") -- Clear the text of the font string
-        element:Hide() -- Hide the font string
+        if element.SetText then -- Check if the element has a SetText method
+            element:SetText("") -- Clear the text of the font string
+            element:Hide() -- Hide the font string
+        end
+        if element.SetTexture then -- Check if the element has a SetTexture method
+            element:SetTexture(nil) -- Clear the texture of the divider
+        end
         element:SetParent(nil) -- Remove the element from its parent frame
     end
     uiElements = {} -- Clear the uiElements table
 end
+
 
 local function CreateRowHeader(frame, yOffset, oreLink)
     local rowHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -25,6 +31,7 @@ local function CreateRowHeader(frame, yOffset, oreLink)
 
     rowHeader:SetPoint("TOPLEFT", 10, yOffset)
     rowHeader:SetWidth(columnWidths.rowHeader)
+    rowHeader:SetJustifyH("LEFT") -- Set text justification to left
     rowHeader:SetText(oreLink)
 
     return rowHeader
@@ -49,6 +56,7 @@ local function UpdateUIFrame(frame)
                     table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
                     rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
                     rowData:SetWidth(columnWidths.rowValue)
+                    rowData:SetJustifyH("LEFT") -- Set text justification to left
                     rowData:SetText(itemLink .. ": " .. count)
 
                     -- Calculate the dynamic yOffset based on the font string height
@@ -57,6 +65,14 @@ local function UpdateUIFrame(frame)
                     yOffsetRow = yOffsetRow - rowItemHeight - 5 -- Adjust the value based on your font size
                 end
             end
+
+            -- Create a horizontal divider
+            local dividerTexture = frame:CreateTexture(nil, "ARTWORK")
+            table.insert(uiElements, dividerTexture) -- Add the texture to the list of UI elements
+            dividerTexture:SetHeight(1)
+            dividerTexture:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
+            dividerTexture:SetPoint("TOPLEFT", rowHeader, "TOPLEFT", -5, 5)
+            dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
 
             -- Increase the yOffset by an additional value to add some padding between rows
             yOffsetHeader = yOffsetHeader - 5 -- Adjust the value as needed
@@ -100,14 +116,23 @@ refreshButton:SetText("Refresh")
 
 -- Create the header row for the table
 local headerRow = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-headerRow:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -40)
+headerRow:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -40)
 headerRow:SetWidth(columnWidths.rowHeader)
+headerRow:SetJustifyH("LEFT") -- Set text justification to left
 headerRow:SetText("|cff00ccffOre Item|r")
 
 local headerRow2 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerRow2:SetPoint("TOPLEFT", headerRow, "TOPRIGHT", 10, 0)
 headerRow2:SetWidth(columnWidths.rowValue)
+headerRow2:SetJustifyH("LEFT") -- Set text justification to left
 headerRow2:SetText("|cff00ccffProspecting Results|r")
+
+-- Create a horizontal divider
+local headerDivider = frame:CreateTexture(nil, "ARTWORK")
+headerDivider:SetHeight(1)
+headerDivider:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
+headerDivider:SetPoint("TOPLEFT", headerRow, "BOTTOMLEFT", -5, -5)
+headerDivider:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", 5, 5)
 
 -- Create the scroll frame for the table
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
@@ -128,15 +153,14 @@ refreshButton:SetScript("OnClick", function()
     UpdateUIFrame(childFrame) -- Call the function to update the UI
 end)
 
-function addonTable:ToggleWindow()
-    if frame:IsShown() then
-        frame:Hide()
-    else
-        frame:Show()
+-- Add an event handler for the OnKeyDown event
+frame:SetScript("OnKeyDown", function(self, key)
+    if key == "ESCAPE" then
+        self:Hide() -- Hide the window
     end
-end
+end)
 
 SLASH_PROSPECTMATE1 = "/prospectmate"
 SlashCmdList["PROSPECTMATE"] = function()
-    addonTable:ToggleWindow()
+    frame:Show() -- Show the window
 end
