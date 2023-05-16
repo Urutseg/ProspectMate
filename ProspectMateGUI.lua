@@ -111,7 +111,7 @@ end)
 -- Create the refresh button
 local refreshButton = CreateFrame("Button", "ProspectMateRefreshButton", frame, "UIPanelButtonTemplate")
 refreshButton:SetSize(100, 25)
-refreshButton:SetPoint("BOTTOMRIGHT", -10, 10)
+refreshButton:SetPoint("TOPRIGHT", -10, -30)
 refreshButton:SetText("Refresh")
 
 -- Create the header row for the table
@@ -146,7 +146,35 @@ childFrame:SetSize(460, 320)
 -- Add the child frame to the scroll frame
 scrollFrame:SetScrollChild(childFrame)
 
-UpdateUIFrame(childFrame)
+local resetButton = CreateFrame("Button", "ResetButton", frame, "UIPanelButtonTemplate")
+resetButton:SetPoint("BOTTOMLEFT", 10, 10)
+resetButton:SetSize(120, 30)
+resetButton:SetText("Reset Data")
+
+StaticPopupDialogs["RESET_DATA_CONFIRMATION"] = {
+    text = "All the data will be deleted if you proceed.",
+    button1 = "Confirm",
+    button2 = "Cancel",
+    timeout = 0,
+    OnAccept = function()
+        SmartProspectorDB = {} -- Clear the data
+        UpdateUIFrame(childFrame) -- Update the frame
+    end,
+    OnCancel = function()
+        -- Nothing needs to be done here
+    end,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+local function ShowConfirmationDialog()
+    local dialog = StaticPopupDialogs["RESET_DATA_CONFIRMATION"] -- Unique dialog name
+    -- Show the dialog
+    StaticPopup_Show("RESET_DATA_CONFIRMATION")
+end
+
+resetButton:SetScript("OnClick", ShowConfirmationDialog)
+
 
 -- Set up the button click handler
 refreshButton:SetScript("OnClick", function()
@@ -162,5 +190,6 @@ end)
 
 SLASH_PROSPECTMATE1 = "/prospectmate"
 SlashCmdList["PROSPECTMATE"] = function()
+    UpdateUIFrame(childFrame) -- Call the function to update the UI
     frame:Show() -- Show the window
 end
