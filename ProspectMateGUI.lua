@@ -46,23 +46,27 @@ local function UpdateUIFrame(frame)
     for oreID, results in pairs(SmartProspectorDB) do
         local oreName, oreLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(oreID)
         if oreName then
-            local rowHeader = CreateRowHeader(frame, yOffsetHeader, oreLink)
+            local oreCount = results[oreID]
+            local rowHeader = CreateRowHeader(frame, yOffsetHeader, oreLink .. ": " .. oreCount)
             local yOffsetRow = 0
             for itemID, count in pairs(results) do
-                local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
-                if itemName then
-
-                    local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                    table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
-                    rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
-                    rowData:SetWidth(columnWidths.rowValue)
-                    rowData:SetJustifyH("LEFT") -- Set text justification to left
-                    rowData:SetText(itemLink .. ": " .. count)
-
-                    -- Calculate the dynamic yOffset based on the font string height
-                    local _, rowItemHeight = rowData:GetFont()
-                    yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
-                    yOffsetRow = yOffsetRow - rowItemHeight - 5 -- Adjust the value based on your font size
+                -- if the data is about consumed material, we skip it, since it's already in the first column
+                if itemID ~= oreID then
+                    local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
+                    if itemName then
+                        
+                        local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                        table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
+                        rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
+                        rowData:SetWidth(columnWidths.rowValue)
+                        rowData:SetJustifyH("LEFT") -- Set text justification to left
+                        rowData:SetText(itemLink .. ": " .. count)
+                        
+                        -- Calculate the dynamic yOffset based on the font string height
+                        local _, rowItemHeight = rowData:GetFont()
+                        yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
+                        yOffsetRow = yOffsetRow - rowItemHeight - 5 -- Adjust the value based on your font size
+                    end
                 end
             end
 
