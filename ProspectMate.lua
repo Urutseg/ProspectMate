@@ -4,6 +4,7 @@ frame:RegisterEvent("TRADE_SKILL_ITEM_CRAFTED_RESULT")
 frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 frame:RegisterEvent("TRADE_SKILL_CRAFT_BEGIN")
 
+local timerDelay = 0.4
 local trackedSpells = {
   374627 -- Prospecting
 }
@@ -48,8 +49,8 @@ local function findChangedItems(oldCounts, newCounts)
     local newCount = newCounts[itemId]
     -- If we consumed something it's the thing we were prospecting
     if newCount and newCount < oldCount then
-      table.insert(changedItems, itemId)
-      -- print("Detected change for " .. itemId)
+      changedItems[itemId] = oldCount - newCount
+      print(tostring(itemId) .. " - old: " .. tostring(oldCount) .. ", new: " .. tostring(newCount))
     end
   end
 
@@ -57,12 +58,18 @@ local function findChangedItems(oldCounts, newCounts)
 end
 
 local function updateSmartProspectorDB()
-  for _, consumedItemID in pairs(consumedItems) do
+  for consumedItemID, consumedItemCount in pairs(consumedItems) do
+    if SmartProspectorDB[consumedItemID] == nil then
+      SmartProspectorDB[consumedItemID] = {}
+    end
+    if SmartProspectorDB[consumedItemID][consumedItemID] == nil then
+      SmartProspectorDB[consumedItemID][consumedItemID] = consumedItemCount
+    else
+      SmartProspectorDB[consumedItemID][consumedItemID] = SmartProspectorDB[consumedItemID][consumedItemID] +
+      consumedItemCount
+    end
     -- print("Updating counts for " .. tostring(consumedItemID))
     for itemId, quantity in pairs(prospectResults) do
-      if SmartProspectorDB[consumedItemID] == nil then
-        SmartProspectorDB[consumedItemID] = {}
-      end
       if SmartProspectorDB[consumedItemID][itemId] == nil then
         SmartProspectorDB[consumedItemID][itemId] = quantity
       else
@@ -71,7 +78,6 @@ local function updateSmartProspectorDB()
     end
   end
 end
-
 
 local function isInTable(table, item)
   for _, id in ipairs(table) do
@@ -109,7 +115,9 @@ function frame:TRADE_SKILL_CRAFT_BEGIN(event, spellID)
     local spellName = GetSpellName(spellID)
     -- print("Doing trackable " .. spellName)
     -- print("counts before crafting")
-    preCraftCounts = getTrackedReagentCounts()
+    preCraftCounts = 
+    C_Timer.After(timerDelay, updateSmartProspectorDBDelayed)
+    getTrackedReagentCounts()
   end
 end
 
@@ -129,7 +137,7 @@ function frame:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellID)
 
     -- Check if the spell cast is a tracked spell
     if isInTable(trackedSpells, spellID) then
-      C_Timer.After(0.3, updateSmartProspectorDBDelayed)
+      C_Timer.After(timerDelay, updateSmartProspectorDBDelayed)
     end
   end
 end
