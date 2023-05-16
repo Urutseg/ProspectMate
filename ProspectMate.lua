@@ -4,7 +4,8 @@ frame:RegisterEvent("TRADE_SKILL_ITEM_CRAFTED_RESULT")
 frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 frame:RegisterEvent("TRADE_SKILL_CRAFT_BEGIN")
 
-local timerDelay = 0.4
+local timer = nil
+local timerDelay = 2.5
 local trackedSpells = {
   374627 -- Prospecting
 }
@@ -76,6 +77,7 @@ local function updateSmartProspectorDB()
         SmartProspectorDB[consumedItemID][itemId] = SmartProspectorDB[consumedItemID][itemId] + quantity
       end
     end
+    prospectResults = {}
   end
 end
 
@@ -103,9 +105,12 @@ function frame:TRADE_SKILL_ITEM_CRAFTED_RESULT(event, ...)
     local itemId = payload.itemID
     local quantity = payload.quantity
 
-    -- Add the prospecting results to the SmartProspectorDB table
-
-    prospectResults[itemId] = quantity
+    -- Add the prospecting results to the prospectResults table
+    if prospectResults[itemId] == nil then
+      prospectResults[itemId] = quantity
+    else
+      prospectResults[itemId] = prospectResults[itemId] + quantity
+    end
   end
 end
 
@@ -115,29 +120,43 @@ function frame:TRADE_SKILL_CRAFT_BEGIN(event, spellID)
     local spellName = GetSpellName(spellID)
     -- print("Doing trackable " .. spellName)
     -- print("counts before crafting")
-    preCraftCounts = 
-    C_Timer.After(timerDelay, updateSmartProspectorDBDelayed)
-    getTrackedReagentCounts()
+    -- if this is the first cast, we get reagent counts, otherwise we do not update the values
+    if timer == nil then
+      preCraftCounts = getTrackedReagentCounts()
+    end
   end
 end
 
 local function updateSmartProspectorDBDelayed()
+  timer = nil
   -- print("counts after crafting")
   -- Get postCraftCounts and consumedItems
   postCraftCounts = getTrackedReagentCounts()
   consumedItems = findChangedItems(preCraftCounts, postCraftCounts)
   -- Update SmartProspectorDB with prospecting results
   updateSmartProspectorDB()
+  consumedItems = {}
 end
 
 function frame:UNIT_SPELLCAST_SUCCEEDED(event, unitTarget, castGUID, spellID)
   -- print("did a cast")
+  -- Cancel the previous timer if it exists
+  if timer  then
+    local isCancelled = timer:IsCancelled()
+    if isCancelled == false then
+      -- print("timer active, trying to cancel")
+      timer:Cancel()
+    end
+  else
+    -- print("no timer, nothing to cancel")
+  end
+    
   if isTracked then
     -- print("did a trackable cast" .. tostring(spellID))
 
     -- Check if the spell cast is a tracked spell
     if isInTable(trackedSpells, spellID) then
-      C_Timer.After(timerDelay, updateSmartProspectorDBDelayed)
+      timer = C_Timer.NewTimer(timerDelay, updateSmartProspectorDBDelayed)
     end
   end
 end
