@@ -6,8 +6,8 @@ local uiElements = {}
 -- Set column widths
 local columnWidths = {
     rowHeader = 150,
-    rowValue = 250,
-    profitValue = 100
+    rowValue = 300,
+    profitValue = 150
 }
 
 -- Function to clear existing UI elements
@@ -38,89 +38,18 @@ local function CreateRowHeader(frame, yOffset, oreLink)
     return rowHeader
 end
 
-local function UpdateUIFrame(frame)
-    -- Clear existing UI elements
-    ClearUIElements()
-
-    -- Loop through the prospecting data and add rows to the table
-    local yOffsetHeader = 0
-    for oreID, results in pairs(SmartProspectorDB) do
-        local oreName, oreLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(oreID)
-        if oreName then
-            local oreCount = results[oreID]
-            local headerText = oreLink .. ": " .. oreCount
-            local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, oreID)
-            if reagentPrice then
-                headerText = headerText .. "\n(" .. Auctionator.Utilities.CreatePaddedMoneyString(reagentPrice) .. ")"
-            end
-            local rowHeader = CreateRowHeader(frame, yOffsetHeader, headerText)
-            local yOffsetRow = 0
-            local totalReturn = 0
-
-            for itemID, count in pairs(results) do
-                -- if the data is about consumed material, we skip it, since it's already in the first column
-                if itemID ~= oreID then
-                    local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
-                    if itemName then
-                        local rowText = itemLink .. ": " .. count
-                        local resultPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, itemID)
-                        if resultPrice then
-                            rowText = rowText ..
-                                " (" .. Auctionator.Utilities.CreatePaddedMoneyString(resultPrice) .. ")"
-                            totalReturn = resultPrice * count + totalReturn
-                        end
-                        local rowData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                        table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
-                        rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
-                        rowData:SetWidth(columnWidths.rowValue)
-                        rowData:SetJustifyH("LEFT") -- Set text justification to left
-                        rowData:SetText(rowText)
-
-                        -- Calculate the dynamic yOffset based on the font string height
-                        local _, rowItemHeight = rowData:GetFont()
-                        yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
-                        yOffsetRow = yOffsetRow - rowItemHeight - 5       -- Adjust the value based on your font size
-                    end
-                end
-            end
-
-            if reagentPrice then
-                -- Create profit column
-                local returnData = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                table.insert(uiElements, returnData) -- Add the font string to the list of UI elements
-                returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
-                returnData:SetWidth(columnWidths.profitValue)
-                returnData:SetJustifyH("LEFT") -- Set text justification to left
-                local profit = (reagentPrice * oreCount - totalReturn) * 100 / oreCount
-                local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
-                local profitLoss = profit < 0 and "Loss" or "Profit"
-                local profitability = profitLoss .. " per 100: " .. profitGold
-                -- local profitability = "Total return: " .. returnGold .. " Profit: " .. profitGold
-
-                -- print(oreName .. profitability)
-
-                local profitText =
-                    returnData:SetText(profitability)
-            end
-
-            -- Create a horizontal divider
-            local dividerTexture = frame:CreateTexture(nil, "ARTWORK")
-            table.insert(uiElements, dividerTexture)     -- Add the texture to the list of UI elements
-            dividerTexture:SetHeight(1)
-            dividerTexture:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
-            dividerTexture:SetPoint("TOPLEFT", rowHeader, "TOPLEFT", -5, 5)
-            dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
-
-            -- Increase the yOffset by an additional value to add some padding between rows
-            yOffsetHeader = yOffsetHeader - 20 -- Adjust the value as needed
+local function IsValueInTable(value, tableToCheck)
+    for _, entry in pairs(tableToCheck) do
+        if entry == value then
+            return true
         end
     end
+    return false
 end
-
 
 -- Create the main frame for the table
 local frame = CreateFrame("Frame", "ProspectMateFrame", UIParent, "UIPanelDialogTemplate")
-frame:SetSize(600, 430)
+frame:SetSize(700, 460)
 frame:SetPoint("CENTER")
 frame:Hide()
 
@@ -131,7 +60,6 @@ frame:EnableMouse(true) -- Allow the user to interact with the frame
 frame.Title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 frame.Title:SetPoint("TOP", frame, "TOP", 0, -10)
 frame.Title:SetText("ProspectMate")
-
 
 -- Set up the drag functionality for the frame
 frame:SetScript("OnMouseDown", function(self, button)
@@ -151,34 +79,160 @@ refreshButton:SetSize(100, 25)
 refreshButton:SetPoint("TOPRIGHT", -10, -30)
 refreshButton:SetText("Refresh")
 
+-- Create the checkboxes
+local checkboxOre = CreateFrame("CheckButton", "ProspectMateCheckbox", frame, "UICheckButtonTemplate")
+checkboxOre:SetSize(20, 20)
+checkboxOre:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -40)
+-- checkboxOre:SetChecked(true)
+local checkboxOreLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+checkboxOreLabel:SetPoint("LEFT", checkboxOre, "RIGHT", 5, 0)
+checkboxOreLabel:SetText("Ore")
+
+local checkboxHerb = CreateFrame("CheckButton", "ProspectMateCheckbox", frame, "UICheckButtonTemplate")
+checkboxHerb:SetSize(20, 20)
+checkboxHerb:SetPoint("LEFT", checkboxOreLabel, "RIGHT", 10, 0)
+-- checkboxHerb:SetChecked(true)
+local checkboxHerbLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+checkboxHerbLabel:SetPoint("LEFT", checkboxHerb, "RIGHT", 5, 0)
+checkboxHerbLabel:SetText("Herbs")
+
+local checkboxGem = CreateFrame("CheckButton", "ProspectMateCheckbox", frame, "UICheckButtonTemplate")
+checkboxGem:SetSize(20, 20)
+checkboxGem:SetPoint("LEFT", checkboxHerbLabel, "RIGHT", 10, 0)
+-- checkboxGem:SetChecked(true)
+local checkboxGemLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+checkboxGemLabel:SetPoint("LEFT", checkboxGem, "RIGHT", 5, 0)
+checkboxGemLabel:SetText("Gems")
+
+
+local function UpdateUIFrame(frameToUpdate)
+    -- Clear existing UI elements
+    ClearUIElements()
+
+    -- Loop through the prospecting data and add rows to the table
+    local yOffsetHeader = -20
+    local showItem = false
+    for oreID, results in pairs(SmartProspectorDB) do
+        -- Check the state of the checkboxes and determine if the item should be shown
+        if (IsValueInTable(oreID, Ores) and checkboxOre:GetChecked()) or
+            (IsValueInTable(oreID, Herbs) and checkboxHerb:GetChecked()) or
+            (IsValueInTable(oreID, Gems) and checkboxGem:GetChecked()) then
+            showItem = true
+        end
+        if showItem then
+            local oreName, oreLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(oreID)
+            if oreName then
+                local oreCount = results[oreID]
+                local headerText = oreLink .. ": " .. oreCount
+                local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, oreID)
+                if reagentPrice then
+                    headerText = headerText ..
+                        "\n(" .. Auctionator.Utilities.CreatePaddedMoneyString(reagentPrice) .. ")"
+                end
+                local rowHeader = CreateRowHeader(frameToUpdate, yOffsetHeader, headerText)
+                local yOffsetRow = 0
+                local totalReturn = 0
+
+                for itemID, count in pairs(results) do
+                    -- if the data is about consumed material, we skip it, since it's already in the first column
+                    if itemID ~= oreID then
+                        local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
+                        if itemName then
+                            local rowText = itemLink .. ": " .. count
+                            local resultPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, itemID)
+                            if resultPrice then
+                                rowText = rowText ..
+                                    " (" .. Auctionator.Utilities.CreatePaddedMoneyString(resultPrice) .. ")"
+                                totalReturn = resultPrice * count + totalReturn
+                            end
+                            local rowData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                            table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
+                            rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
+                            rowData:SetWidth(columnWidths.rowValue)
+                            rowData:SetJustifyH("LEFT") -- Set text justification to left
+                            rowData:SetText(rowText)
+
+                            -- Calculate the dynamic yOffset based on the font string height
+                            local _, rowItemHeight = rowData:GetFont()
+                            yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
+                            yOffsetRow = yOffsetRow - rowItemHeight - 5       -- Adjust the value based on your font size
+                        end
+                    end
+                end
+
+                if reagentPrice then
+                    -- Create profit column
+                    local returnData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                    table.insert(uiElements, returnData) -- Add the font string to the list of UI elements
+                    returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
+                    returnData:SetWidth(columnWidths.profitValue)
+                    returnData:SetJustifyH("LEFT") -- Set text justification to left
+                    local profit = (reagentPrice * oreCount - totalReturn) * 100 / oreCount
+                    local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
+                    local profitLoss = profit < 0 and "Loss" or "Profit"
+                    local profitability = profitLoss .. " per 100: " .. profitGold
+                    -- local profitability = "Total return: " .. returnGold .. " Profit: " .. profitGold
+
+                    -- print(oreName .. profitability)
+
+                    local profitText =
+                        returnData:SetText(profitability)
+                end
+
+                -- Create a horizontal divider
+                local dividerTexture = frameToUpdate:CreateTexture(nil, "ARTWORK")
+                table.insert(uiElements, dividerTexture)     -- Add the texture to the list of UI elements
+                dividerTexture:SetHeight(1)
+                dividerTexture:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
+                dividerTexture:SetPoint("TOPLEFT", rowHeader, "TOPLEFT", -5, 5)
+                dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
+
+                -- Increase the yOffset by an additional value to add some padding between rows
+                yOffsetHeader = yOffsetHeader - 20 -- Adjust the value as needed
+            end
+        end
+    end
+end
+
+-- Assign the OnClick handlers for the checkboxes
+checkboxOre:SetScript("OnClick", function(self)
+    UpdateUIFrame(frame)
+end)
+checkboxHerb:SetScript("OnClick", function(self)
+    UpdateUIFrame(frame)
+end)
+checkboxGem:SetScript("OnClick", function(self)
+    UpdateUIFrame(frame)
+end)
+
 -- Create the header row for the table
 local headerRow = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-headerRow:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -40)
+headerRow:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -60)
 headerRow:SetWidth(columnWidths.rowHeader)
 headerRow:SetJustifyH("LEFT") -- Set text justification to left
-headerRow:SetText("|cff00ccffOre Item|r")
+headerRow:SetText("|cff00ccffItem|r")
 
 local headerRow2 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerRow2:SetPoint("TOPLEFT", headerRow, "TOPRIGHT", 10, 0)
 headerRow2:SetWidth(columnWidths.rowValue)
 headerRow2:SetJustifyH("LEFT") -- Set text justification to left
-headerRow2:SetText("|cff00ccffProspecting Results|r")
+headerRow2:SetText("|cff00ccffYield|r")
 
 -- Create a horizontal divider
 local headerDivider = frame:CreateTexture(nil, "ARTWORK")
 headerDivider:SetHeight(1)
 headerDivider:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
 headerDivider:SetPoint("TOPLEFT", headerRow, "BOTTOMLEFT", -5, -5)
-headerDivider:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", 5, 5)
+headerDivider:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -25, 5)
 
 -- Create the scroll frame for the table
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
-scrollFrame:SetSize(560, 320)
-scrollFrame:SetPoint("TOPLEFT", 10, -70)
+scrollFrame:SetSize(660, 340)
+scrollFrame:SetPoint("TOPLEFT", 10, -80)
 
 -- Create the child frame for the table
 local childFrame = CreateFrame("Frame", "ProspectMateChildFrame", scrollFrame)
-childFrame:SetSize(560, 320)
+childFrame:SetSize(660, 340)
 
 -- Add the child frame to the scroll frame
 scrollFrame:SetScrollChild(childFrame)
