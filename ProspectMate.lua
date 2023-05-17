@@ -1,4 +1,3 @@
--- Register for the TRADE_SKILL_ITEM_CRAFTED_RESULT event
 local frame = CreateFrame("FRAME")
 frame:RegisterEvent("TRADE_SKILL_ITEM_CRAFTED_RESULT")
 frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
@@ -15,7 +14,7 @@ local trackedSpells = {
 local isTracked = false
 
 -- Table of crafting reagents that will be tracked
-local trackedReagents = {
+Ores = {
   192880, -- Crumbled Stone
   190395, -- Serevite Ore 1
   190396, -- Serevite Ore 2
@@ -27,7 +26,9 @@ local trackedReagents = {
   190313, -- Khazgorite Ore 2
   190314, -- Khazgorite Ore 3
   194545, -- Prismatic Ore
+}
 
+Herbs = {
   191460, -- Hochenblume 1
   191461, -- Hochenblume 2
   191462, -- Hochenblume 3
@@ -40,14 +41,21 @@ local trackedReagents = {
   191464, -- Saxifrage 1
   191465, -- Saxifrage 2
   191466, -- Saxifrage 3
+}
 
+Gems = {
   192849, -- Eternity Amber 1
   192850, -- Eternity Amber 2
   192851, -- Eternity Amber 3
-
   192866, -- Nozdorite 1
   192867, -- Nozdorite 2
   192868, -- Nozdorite 3
+}
+
+local trackedReagents = {
+  unpack(Ores),
+  unpack(Herbs),
+  unpack(Gems)
 }
 -- Table to store the quantity of each tracked reagent
 local preCraftCounts = {}
