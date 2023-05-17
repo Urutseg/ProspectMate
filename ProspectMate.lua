@@ -31,6 +31,23 @@ local trackedReagents = {
   191460, -- Hochenblume 1
   191461, -- Hochenblume 2
   191462, -- Hochenblume 3
+  191470, -- Writhebark 1
+  191471, -- Writhebark 2
+  191472, -- Writhebark 3
+  191467, -- Bubble Poppy 1
+  191468, -- Bubble Poppy 2
+  191469, -- Bubble Poppy 3
+  191464, -- Saxifrage 1
+  191465, -- Saxifrage 2
+  191466, -- Saxifrage 3
+
+  192849, -- Eternity Amber 1
+  192850, -- Eternity Amber 2
+  192851, -- Eternity Amber 3
+
+  192866, -- Nozdorite 1
+  192867, -- Nozdorite 2
+  192868, -- Nozdorite 3
 }
 -- Table to store the quantity of each tracked reagent
 local preCraftCounts = {}

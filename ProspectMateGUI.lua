@@ -112,7 +112,7 @@ local function UpdateUIFrame(frame)
             dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
 
             -- Increase the yOffset by an additional value to add some padding between rows
-            yOffsetHeader = yOffsetHeader - 5 -- Adjust the value as needed
+            yOffsetHeader = yOffsetHeader - 20 -- Adjust the value as needed
         end
     end
 end
