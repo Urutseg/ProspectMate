@@ -17,6 +17,13 @@ local trackedReagents = {
   190394, -- Serevite Ore 3
   190396, -- Serevite Ore 2
   190395, -- Serevite Ore 1
+  188658, -- Draconium Ore 2
+  190311, -- Draconium Ore 3
+  189143, -- Draconium Ore 1
+  190312, -- Khazgorite Ore 1
+  190313, -- Khazgorite Ore 2
+  190314, -- Khazgorite Ore 3
+  194545, -- Prismatic Ore
 }
 -- Table to store the quantity of each tracked reagent
 local preCraftCounts = {}
