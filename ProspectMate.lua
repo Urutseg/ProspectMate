@@ -7,23 +7,30 @@ frame:RegisterEvent("TRADE_SKILL_CRAFT_BEGIN")
 local timer = nil
 local timerDelay = 2.5
 local trackedSpells = {
-  374627 -- Prospecting
+  374627, -- Prospecting
+  395696, -- Crushing
+  382981, -- Milling
+  376562, -- Unravelling
 }
 local isTracked = false
 
 -- Table of crafting reagents that will be tracked
 local trackedReagents = {
   192880, -- Crumbled Stone
-  190394, -- Serevite Ore 3
-  190396, -- Serevite Ore 2
   190395, -- Serevite Ore 1
+  190396, -- Serevite Ore 2
+  190394, -- Serevite Ore 3
+  189143, -- Draconium Ore 1
   188658, -- Draconium Ore 2
   190311, -- Draconium Ore 3
-  189143, -- Draconium Ore 1
   190312, -- Khazgorite Ore 1
   190313, -- Khazgorite Ore 2
   190314, -- Khazgorite Ore 3
   194545, -- Prismatic Ore
+
+  191460, -- Hochenblume 1
+  191461, -- Hochenblume 2
+  191462, -- Hochenblume 3
 }
 -- Table to store the quantity of each tracked reagent
 local preCraftCounts = {}

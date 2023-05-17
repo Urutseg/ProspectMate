@@ -97,7 +97,7 @@ local function UpdateUIFrame(frame)
                 local profitability = profitLoss .. " per 100: " .. profitGold
                 -- local profitability = "Total return: " .. returnGold .. " Profit: " .. profitGold
 
-                print(oreName .. profitability)
+                -- print(oreName .. profitability)
 
                 local profitText =
                     returnData:SetText(profitability)
