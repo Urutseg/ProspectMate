@@ -52,11 +52,28 @@ Gems = {
   192868, -- Nozdorite 3
 }
 
-local trackedReagents = {
-  unpack(Ores),
-  unpack(Herbs),
-  unpack(Gems)
+Cloth = {
+  193922, -- Wildercloth
+  193050, -- Tattered Wildercloth
+  193924, -- Frostbitten Wildercloth
+  193923, -- Decayed Wildercloth
+  193925, -- Singed Wildercloth
 }
+
+local trackedReagents = {}
+for _, val in pairs(Ores) do
+  table.insert(trackedReagents, val)
+end
+for _, val in pairs(Herbs) do
+  table.insert(trackedReagents, val)
+end
+for _, val in pairs(Gems) do
+  table.insert(trackedReagents, val)
+end
+for _, val in pairs(Cloth) do
+  table.insert(trackedReagents, val)
+end
+
 -- Table to store the quantity of each tracked reagent
 local preCraftCounts = {}
 local postCraftCounts = {}

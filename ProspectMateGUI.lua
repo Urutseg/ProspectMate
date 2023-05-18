@@ -104,6 +104,13 @@ local checkboxGemLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal"
 checkboxGemLabel:SetPoint("LEFT", checkboxGem, "RIGHT", 5, 0)
 checkboxGemLabel:SetText("Gems")
 
+local checkboxCloth = CreateFrame("CheckButton", "ProspectMateCheckbox", frame, "UICheckButtonTemplate")
+checkboxCloth:SetSize(20, 20)
+checkboxCloth:SetPoint("LEFT", checkboxGemLabel, "RIGHT", 10, 0)
+-- checkboxGem:SetChecked(true)
+local checkboxClothLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+checkboxClothLabel:SetPoint("LEFT", checkboxCloth, "RIGHT", 5, 0)
+checkboxClothLabel:SetText("Cloth")
 
 local function UpdateUIFrame(frameToUpdate)
     -- Clear existing UI elements
@@ -116,7 +123,8 @@ local function UpdateUIFrame(frameToUpdate)
         -- Check the state of the checkboxes and determine if the item should be shown
         if (IsValueInTable(oreID, Ores) and checkboxOre:GetChecked()) or
             (IsValueInTable(oreID, Herbs) and checkboxHerb:GetChecked()) or
-            (IsValueInTable(oreID, Gems) and checkboxGem:GetChecked()) then
+            (IsValueInTable(oreID, Gems) and checkboxGem:GetChecked()) or
+            (IsValueInTable(oreID, Cloth) and checkboxCloth:GetChecked()) then
             showItem = true
         end
         if showItem then
@@ -167,7 +175,7 @@ local function UpdateUIFrame(frameToUpdate)
                     returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
                     returnData:SetWidth(columnWidths.profitValue)
                     returnData:SetJustifyH("LEFT") -- Set text justification to left
-                    local profit = (reagentPrice * oreCount - totalReturn) * 100 / oreCount
+                    local profit = (totalReturn - reagentPrice * oreCount) * 100 / oreCount
                     local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
                     local profitLoss = profit < 0 and "Loss" or "Profit"
                     local profitability = profitLoss .. " per 100: " .. profitGold
