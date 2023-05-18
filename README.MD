@@ -10,9 +10,13 @@ ProspectMate is a World of Warcraft addon that tracks ore prospecting, herb mill
 - Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for pricing and profit data.
 - User-friendly interface for easy management and tracking.
 
+## Development
+
+This addon was developed with the assistance of an AI language model provided by OpenAI. If you would like to involve the AI language model in the creation process of your addon or have any specific questions, feel free to reach out and ask for assistance.
+
 ## Installation
 
-1. Download the latest release of ProspectMate from the [Releases](https://github.com/your-username/prospectmate/releases) page.
+1. Download the latest release of ProspectMate from the [Releases](https://github.com/urutseg/prospectmate/releases) page.
 2. Extract the downloaded ZIP file.
 3. Copy the ProspectMate folder into your WoW AddOns folder (usually located at `World of Warcraft/_retail_/Interface/AddOns`).
 4. Launch World of Warcraft and ensure that ProspectMate is enabled in the AddOns menu.
@@ -37,8 +41,8 @@ Contributions to ProspectMate are welcome! If you encounter any issues or have s
 
 ## Credits
 
-ProspectMate is developed and maintained by Your Name.
+ProspectMate is developed and maintained by Mor'Qua with the assistance of an AI language model.
 
 ## Feedback
 
-If you have any feedback or questions about ProspectMate, feel free to contact me via email at yourname@example.com or open an issue on the [GitHub repository](https://github.com/your-username/prospectmate).
+If you have any feedback or questions about ProspectMate, feel free to contact me via email at yourname@example.com or open an issue on the [GitHub repository](https://github.com/urutseg/prospectmate).
