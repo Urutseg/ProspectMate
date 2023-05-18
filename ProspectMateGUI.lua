@@ -119,6 +119,7 @@ local function UpdateUIFrame(frameToUpdate)
     -- Loop through the prospecting data and add rows to the table
     local yOffsetHeader = -20
     local showItem = false
+    local sortedRows = {}
     for reagentID, results in pairs(SmartProspectorDB) do
         -- Check the state of the checkboxes and determine if the item should be shown
         if (IsValueInTable(reagentID, Ores) and checkboxOre:GetChecked()) or
@@ -127,77 +128,93 @@ local function UpdateUIFrame(frameToUpdate)
             (IsValueInTable(reagentID, Cloth) and checkboxCloth:GetChecked()) then
             showItem = true
         end
+
+        -- inserting the reagents into interim table to sort them and display sorted.
         if showItem then
             local reagentName, reagentLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(reagentID)
-            if reagentName then
-                local reagentCount = results[reagentID]
-                local headerText = reagentLink .. ": " .. reagentCount
-                local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, reagentID)
-                if reagentPrice then
-                    headerText = headerText ..
-                        "\n(" .. Auctionator.Utilities.CreatePaddedMoneyString(reagentPrice) .. ")"
-                end
-                local rowHeader = CreateRowHeader(frameToUpdate, yOffsetHeader, headerText)
-                local yOffsetRow = 0
-                local totalReturn = 0
-
-                for itemID, count in pairs(results) do
-                    -- if the data is about consumed material, we skip it, since it's already in the first column
-                    if itemID ~= reagentID then
-                        local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
-                        if itemName then
-                            local rowText = itemLink .. ": " .. count
-                            local resultPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, itemID)
-                            if resultPrice then
-                                rowText = rowText ..
-                                    " (" .. Auctionator.Utilities.CreatePaddedMoneyString(resultPrice) .. ")"
-                                totalReturn = resultPrice * count + totalReturn
-                            end
-                            local rowData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                            table.insert(uiElements, rowData) -- Add the font string to the list of UI elements
-                            rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
-                            rowData:SetWidth(columnWidths.rowValue)
-                            rowData:SetJustifyH("LEFT") -- Set text justification to left
-                            rowData:SetText(rowText)
-
-                            -- Calculate the dynamic yOffset based on the font string height
-                            local _, rowItemHeight = rowData:GetFont()
-                            yOffsetHeader = yOffsetHeader - rowItemHeight - 5 -- Adjust the value based on your font size
-                            yOffsetRow = yOffsetRow - rowItemHeight - 5       -- Adjust the value based on your font size
-                        end
-                    end
-                end
-
-                if reagentPrice then
-                    -- Create profit column
-                    local returnData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                    table.insert(uiElements, returnData) -- Add the font string to the list of UI elements
-                    returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
-                    returnData:SetWidth(columnWidths.profitValue)
-                    returnData:SetJustifyH("LEFT") -- Set text justification to left
-                    local profit = (totalReturn - reagentPrice * reagentCount) * 100 / reagentCount
-                    local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
-                    local profitLoss = profit < 0 and "Loss" or "Profit"
-                    local profitability = profitLoss .. " per 100: " .. profitGold
-
-                    local profitText =
-                        returnData:SetText(profitability)
-                end
-
-                -- Create a horizontal divider
-                local dividerTexture = frameToUpdate:CreateTexture(nil, "ARTWORK")
-                table.insert(uiElements, dividerTexture)     -- Add the texture to the list of UI elements
-                dividerTexture:SetHeight(1)
-                dividerTexture:SetColorTexture(1, 1, 1, 0.5) -- Adjust the color and transparency as desired
-                dividerTexture:SetPoint("TOPLEFT", rowHeader, "TOPLEFT", -5, 5)
-                dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
-
-                -- Increase the yOffset by an additional value to add some padding between rows
-                yOffsetHeader = yOffsetHeader - 20 -- Adjust the value as needed
-            end
+            table.insert(sortedRows, { reagentID = reagentID, reagentLink = reagentLink })
         end
         -- Resetting the value
         showItem = false
+    end
+
+    table.sort(sortedRows, function(a, b)
+        local aLink = a.reagentLink or ""  -- Use an empty string if a.reagentLink is nil
+        local bLink = b.reagentLink or ""  -- Use an empty string if b.reagentLink is nil
+        return aLink < bLink
+    end)
+
+    for _, row in ipairs(sortedRows) do
+        -- Retrieve the necessary data from the row table
+        local reagentID = row.reagentID
+        local results = SmartProspectorDB[reagentID]
+        local reagentName, reagentLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(reagentID)
+        if reagentName then
+            local reagentCount = results[reagentID]
+            local headerText = reagentLink .. ": " .. reagentCount
+            local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, reagentID)
+            if reagentPrice then
+                headerText = headerText ..
+                    "\n(" .. Auctionator.Utilities.CreatePaddedMoneyString(reagentPrice) .. ")"
+            end
+            local rowHeader = CreateRowHeader(frameToUpdate, yOffsetHeader, headerText)
+            local yOffsetRow = 0
+            local totalReturn = 0
+
+            for itemID, count in pairs(results) do
+                -- if the data is about consumed material, we skip it, since it's already in the first column
+                if itemID ~= reagentID then
+                    local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
+                    if itemName then
+                        local rowText = itemLink .. ": " .. count
+                        local resultPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, itemID)
+                        if resultPrice then
+                            rowText = rowText ..
+                                " (" .. Auctionator.Utilities.CreatePaddedMoneyString(resultPrice) .. ")"
+                            totalReturn = resultPrice * count + totalReturn
+                        end
+                        local rowData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                        table.insert(uiElements, rowData)     -- Add the font string to the list of UI elements
+                        rowData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10, yOffsetRow)
+                        rowData:SetWidth(columnWidths.rowValue)
+                        rowData:SetJustifyH("LEFT")     -- Set text justification to left
+                        rowData:SetText(rowText)
+
+                        -- Calculate the dynamic yOffset based on the font string height
+                        local _, rowItemHeight = rowData:GetFont()
+                        yOffsetHeader = yOffsetHeader - rowItemHeight - 5     -- Adjust the value based on your font size
+                        yOffsetRow = yOffsetRow - rowItemHeight - 5           -- Adjust the value based on your font size
+                    end
+                end
+            end
+
+            if reagentPrice then
+                -- Create profit column
+                local returnData = frameToUpdate:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                table.insert(uiElements, returnData)     -- Add the font string to the list of UI elements
+                returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
+                returnData:SetWidth(columnWidths.profitValue)
+                returnData:SetJustifyH("LEFT")     -- Set text justification to left
+                local profit = (totalReturn - reagentPrice * reagentCount) * 100 / reagentCount
+                local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
+                local profitLoss = profit < 0 and "Loss" or "Profit"
+                local profitability = profitLoss .. " per 100: " .. profitGold
+
+                local profitText =
+                    returnData:SetText(profitability)
+            end
+
+            -- Create a horizontal divider
+            local dividerTexture = frameToUpdate:CreateTexture(nil, "ARTWORK")
+            table.insert(uiElements, dividerTexture)         -- Add the texture to the list of UI elements
+            dividerTexture:SetHeight(1)
+            dividerTexture:SetColorTexture(1, 1, 1, 0.5)     -- Adjust the color and transparency as desired
+            dividerTexture:SetPoint("TOPLEFT", rowHeader, "TOPLEFT", -5, 5)
+            dividerTexture:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 5, 5)
+
+            -- Increase the yOffset by an additional value to add some padding between rows
+            yOffsetHeader = yOffsetHeader - 20     -- Adjust the value as needed
+        end
     end
 end
 
