@@ -191,19 +191,10 @@ local function UpdateUIFrame(frameToUpdate)
                 yOffsetHeader = yOffsetHeader - 20 -- Adjust the value as needed
             end
         end
+        -- Resetting the value
+        showItem = false
     end
 end
-
--- Assign the OnClick handlers for the checkboxes
-checkboxOre:SetScript("OnClick", function(self)
-    UpdateUIFrame(frame)
-end)
-checkboxHerb:SetScript("OnClick", function(self)
-    UpdateUIFrame(frame)
-end)
-checkboxGem:SetScript("OnClick", function(self)
-    UpdateUIFrame(frame)
-end)
 
 -- Create the header row for the table
 local headerRow = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -236,6 +227,17 @@ childFrame:SetSize(660, 340)
 
 -- Add the child frame to the scroll frame
 scrollFrame:SetScrollChild(childFrame)
+
+-- Assign the OnClick handlers for the checkboxes
+checkboxOre:SetScript("OnClick", function(self)
+    UpdateUIFrame(childFrame)
+end)
+checkboxHerb:SetScript("OnClick", function(self)
+    UpdateUIFrame(childFrame)
+end)
+checkboxGem:SetScript("OnClick", function(self)
+    UpdateUIFrame(childFrame)
+end)
 
 local resetButton = CreateFrame("Button", "ResetButton", frame, "UIPanelButtonTemplate")
 resetButton:SetPoint("BOTTOMLEFT", 10, 10)
