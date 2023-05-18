@@ -26,14 +26,14 @@ local function ClearUIElements()
 end
 
 
-local function CreateRowHeader(frame, yOffset, oreLink)
+local function CreateRowHeader(frame, yOffset, reagentLink)
     local rowHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     table.insert(uiElements, rowHeader) -- Add the font string to the list of UI elements
 
     rowHeader:SetPoint("TOPLEFT", 10, yOffset)
     rowHeader:SetWidth(columnWidths.rowHeader)
     rowHeader:SetJustifyH("LEFT") -- Set text justification to left
-    rowHeader:SetText(oreLink)
+    rowHeader:SetText(reagentLink)
 
     return rowHeader
 end
@@ -119,20 +119,20 @@ local function UpdateUIFrame(frameToUpdate)
     -- Loop through the prospecting data and add rows to the table
     local yOffsetHeader = -20
     local showItem = false
-    for oreID, results in pairs(SmartProspectorDB) do
+    for reagentID, results in pairs(SmartProspectorDB) do
         -- Check the state of the checkboxes and determine if the item should be shown
-        if (IsValueInTable(oreID, Ores) and checkboxOre:GetChecked()) or
-            (IsValueInTable(oreID, Herbs) and checkboxHerb:GetChecked()) or
-            (IsValueInTable(oreID, Gems) and checkboxGem:GetChecked()) or
-            (IsValueInTable(oreID, Cloth) and checkboxCloth:GetChecked()) then
+        if (IsValueInTable(reagentID, Ores) and checkboxOre:GetChecked()) or
+            (IsValueInTable(reagentID, Herbs) and checkboxHerb:GetChecked()) or
+            (IsValueInTable(reagentID, Gems) and checkboxGem:GetChecked()) or
+            (IsValueInTable(reagentID, Cloth) and checkboxCloth:GetChecked()) then
             showItem = true
         end
         if showItem then
-            local oreName, oreLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(oreID)
-            if oreName then
-                local oreCount = results[oreID]
-                local headerText = oreLink .. ": " .. oreCount
-                local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, oreID)
+            local reagentName, reagentLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(reagentID)
+            if reagentName then
+                local reagentCount = results[reagentID]
+                local headerText = reagentLink .. ": " .. reagentCount
+                local reagentPrice = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, reagentID)
                 if reagentPrice then
                     headerText = headerText ..
                         "\n(" .. Auctionator.Utilities.CreatePaddedMoneyString(reagentPrice) .. ")"
@@ -143,7 +143,7 @@ local function UpdateUIFrame(frameToUpdate)
 
                 for itemID, count in pairs(results) do
                     -- if the data is about consumed material, we skip it, since it's already in the first column
-                    if itemID ~= oreID then
+                    if itemID ~= reagentID then
                         local itemName, itemLink, _, _, _, _, _, _, _, itemTexture = GetItemInfo(itemID)
                         if itemName then
                             local rowText = itemLink .. ": " .. count
@@ -175,13 +175,10 @@ local function UpdateUIFrame(frameToUpdate)
                     returnData:SetPoint("TOPLEFT", rowHeader, "TOPRIGHT", 10 + columnWidths.rowValue, -5)
                     returnData:SetWidth(columnWidths.profitValue)
                     returnData:SetJustifyH("LEFT") -- Set text justification to left
-                    local profit = (totalReturn - reagentPrice * oreCount) * 100 / oreCount
+                    local profit = (totalReturn - reagentPrice * reagentCount) * 100 / reagentCount
                     local profitGold = Auctionator.Utilities.CreatePaddedMoneyString(profit)
                     local profitLoss = profit < 0 and "Loss" or "Profit"
                     local profitability = profitLoss .. " per 100: " .. profitGold
-                    -- local profitability = "Total return: " .. returnGold .. " Profit: " .. profitGold
-
-                    -- print(oreName .. profitability)
 
                     local profitText =
                         returnData:SetText(profitability)
