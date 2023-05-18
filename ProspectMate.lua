@@ -107,7 +107,7 @@ local function findChangedItems(oldCounts, newCounts)
     -- If we consumed something it's the thing we were prospecting
     if newCount and newCount < oldCount then
       changedItems[itemId] = oldCount - newCount
-      print(tostring(itemId) .. " - old: " .. tostring(oldCount) .. ", new: " .. tostring(newCount))
+      -- print(tostring(itemId) .. " - old: " .. tostring(oldCount) .. ", new: " .. tostring(newCount))
     end
   end
 
