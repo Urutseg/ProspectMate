@@ -50,6 +50,18 @@ Gems = {
   192866, -- Nozdorite 1
   192867, -- Nozdorite 2
   192868, -- Nozdorite 3
+
+  192862, -- Neltharite 1
+  192863, -- Neltharite 2
+  192865, -- Neltharite 3
+  
+  192852, -- Alexstraszite 1
+  192853, -- Alexstraszite 2
+  192855, -- Alexstraszite 3
+
+  192859, -- Ysemerald 1
+  192860, -- Ysemerald 2
+  192861, -- Ysemerald 3
 }
 
 Cloth = {
