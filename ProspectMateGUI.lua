@@ -5,7 +5,7 @@ local uiElements = {}
 
 -- Set column widths
 local columnWidths = {
-    rowHeader = 150,
+    rowHeader = 170,
     rowValue = 300,
     profitValue = 150
 }
