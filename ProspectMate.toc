@@ -1,5 +1,5 @@
 ## Title: ProspectMate
-## Version: 1.0
+## Version: 1.0.3
 ## Author: Mor'Qua Devs
 
 ## Interface: 100100
