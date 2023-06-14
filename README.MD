@@ -45,4 +45,4 @@ ProspectMate is developed and maintained by Mor'Qua with the assistance of an AI
 
 ## Feedback
 
-If you have any feedback or questions about ProspectMate, feel free to contact me via email at yourname@example.com or open an issue on the [GitHub repository](https://github.com/urutseg/prospectmate).
+If you have any feedback or questions about ProspectMate, feel free to contact me or open an issue on the [GitHub repository](https://github.com/urutseg/prospectmate).
