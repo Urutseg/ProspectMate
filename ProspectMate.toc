@@ -1,8 +1,8 @@
 ## Title: ProspectMate
-## Version: 1.0.4
+## Version: 1.0.5
 ## Author: Mor'Qua Devs
 
-## Interface: 100105
+## Interface: 100107
 
 ## Notes: A simple addon to track ore prospecting, herb milling and cloth unraveling results.
 
