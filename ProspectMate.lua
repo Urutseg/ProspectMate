@@ -47,6 +47,15 @@ Gems = {
   192849, -- Eternity Amber 1
   192850, -- Eternity Amber 2
   192851, -- Eternity Amber 3
+
+  192837, -- Queen's Ruby 1
+  192838, -- Queen's Ruby 1
+  192839, -- Queen's Ruby 1
+
+  192856, -- Malygite 1
+  192857, -- Malygite 1
+  192858, -- Malygite 1
+
   192866, -- Nozdorite 1
   192867, -- Nozdorite 2
   192868, -- Nozdorite 3
