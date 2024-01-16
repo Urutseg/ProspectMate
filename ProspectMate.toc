@@ -2,7 +2,7 @@
 ## Version: 1.0.6
 ## Author: Mor'Qua Devs
 
-## Interface: 100200
+## Interface: 100205
 
 ## Notes: A simple addon to track ore prospecting, herb milling and cloth unraveling results.
 
