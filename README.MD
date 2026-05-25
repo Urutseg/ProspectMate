@@ -1,10 +1,10 @@
 # ProspectMate
 
-ProspectMate is a World of Warcraft addon that tracks ore prospecting, herb milling, and cloth unraveling results. It provides an easy-to-use interface to help you keep track of your material conversions and calculate profitability.
+ProspectMate is a World of Warcraft addon that tracks ore prospecting, gem crushing, and herb milling results. It provides an easy-to-use interface to help you keep track of your material conversions and calculate profitability.
 
 ## Features
 
-- Track prospecting, milling, and unraveling results for ores, herbs, and cloth.
+- Track prospecting, crushing, and milling results for ores, gems, and herbs.
 - Calculate the total return and profitability of your conversions.
 - Filter and display specific material types based on checkboxes.
 - Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for pricing and profit data.
@@ -25,7 +25,7 @@ This addon was developed with the assistance of an AI language model provided by
 
 1. Open the ProspectMate window by typing `/prospectmate` in the chat.
 2. The window will display a table with the prospecting, milling, or unraveling results.
-3. Use the checkboxes to filter and display specific material types.
+3. Use the checkboxes to filter and display specific material types. Cloth is kept for legacy Dragonflight data, but Midnight no longer uses cloth unraveling.
 4. The total return and profitability will be calculated based on the displayed results.
 5. Note: ProspectMate does not account for any profession attributes. It tracks your specific outcomes as they are.
 6. If your profession attributes change (e.g., skill level, inspiration, resourcefulness), click the "Reset Data" button to start from scratch and obtain relevant data again.
