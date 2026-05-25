@@ -1,12 +1,11 @@
 local addonName, PM = ...
 
 local uiElements = {}
-local filterState = {
-  ores = true,
-  herbs = true,
-  gems = true,
-  cloth = false,
-}
+local professionFilterState = {}
+local professionCheckboxes = {}
+local oldRecipesCheckbox
+local professionDropdown
+local professionDropdownMenu
 
 local COLORS = {
   cyan = "ff00ccff",
@@ -57,12 +56,79 @@ local function GetItemDisplay(itemID)
 end
 
 local function GetCategory(itemID)
+  PM.EnsureIndexes()
+
   return PM.Index.categoryByItemID[itemID]
 end
 
+local function GetCharacterKey()
+  local name, realm = UnitFullName and UnitFullName("player")
+  if not name or name == "" then
+    return "default"
+  end
+
+  return name .. "-" .. (realm or GetRealmName() or "")
+end
+
+local function GetCharacterOptions()
+  local options = PM.GetOptions()
+  options.characters = options.characters or {}
+
+  local characterKey = GetCharacterKey()
+  options.characters[characterKey] = options.characters[characterKey] or {}
+
+  return options.characters[characterKey]
+end
+
+local function HasSavedProfessionFilters(characterOptions)
+  return type(characterOptions.professions) == "table"
+end
+
+local function SetDefaultProfessionFilters()
+  PM.EnsureIndexes()
+
+  local characterOptions = GetCharacterOptions()
+  local includeLegacy = PM.GetOptions().showOldRecipes == true
+
+  if HasSavedProfessionFilters(characterOptions) then
+    professionFilterState = characterOptions.professions
+    return
+  end
+
+  professionFilterState = {}
+
+  for _, professionKey in ipairs(PM.Index.professionOrder) do
+    local profession = PM.Data.professions[professionKey]
+    if profession and (includeLegacy or not profession.legacy) then
+      professionFilterState[professionKey] =
+        PM.CharacterHasProfession(professionKey) and PM.CharacterKnowsProfessionRecipe(professionKey, includeLegacy)
+    end
+  end
+end
+
+local function SaveProfessionFilters()
+  GetCharacterOptions().professions = professionFilterState
+end
+
+local function IsProfessionSelected(professionKey)
+  return professionFilterState[professionKey] == true
+end
+
+local function ShouldShowOldRecipes()
+  return PM.GetOptions().showOldRecipes == true
+end
+
 local function ShouldShowReagent(itemID)
+  PM.EnsureIndexes()
+
   local category = GetCategory(itemID)
-  return category and filterState[category]
+  local professionKey = PM.Index.professionByItemID[itemID]
+
+  if not category or not IsProfessionSelected(professionKey) then
+    return false
+  end
+
+  return ShouldShowOldRecipes() or not PM.Index.legacyByItemID[itemID]
 end
 
 local function IsAuctionatorReady()
@@ -144,34 +210,121 @@ summaryText:SetWidth(650)
 summaryText:SetJustifyH("LEFT")
 summaryText:SetText(ColorText("Waiting for data", COLORS.gray))
 
-local function CreateFilterButton(categoryKey, relativeTo)
-  local category = PM.Data.categories[categoryKey]
-  local checkbox = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
-  checkbox:SetSize(20, 20)
-  checkbox:SetChecked(filterState[categoryKey])
+local function CountSelectedProfessions()
+  local selected = 0
+  local selectedLabel
 
-  if relativeTo then
-    checkbox:SetPoint("LEFT", relativeTo, "RIGHT", 10, 0)
-  else
-    checkbox:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -40)
+  for _, professionKey in ipairs(PM.Index.professionOrder) do
+    local profession = PM.Data.professions[professionKey]
+    if profession and IsProfessionSelected(professionKey) then
+      selected = selected + 1
+      selectedLabel = profession.label
+    end
   end
 
-  local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  label:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
-  label:SetText(category.label)
+  return selected, selectedLabel
+end
 
-  checkbox:SetScript("OnClick", function(self)
-    filterState[categoryKey] = self:GetChecked()
-    PM.UpdateUIFrame()
+local function UpdateProfessionDropdownText()
+  if not professionDropdown then
+    return
+  end
+
+  local selected, selectedLabel = CountSelectedProfessions()
+  if selected == 0 then
+    professionDropdown:SetText("Professions: None")
+  elseif selected == 1 then
+    professionDropdown:SetText("Profession: " .. selectedLabel)
+  else
+    professionDropdown:SetText("Professions: " .. selected)
+  end
+end
+
+local function UpdateProfessionCheckboxes()
+  for professionKey, checkbox in pairs(professionCheckboxes) do
+    checkbox:SetChecked(IsProfessionSelected(professionKey))
+  end
+  UpdateProfessionDropdownText()
+end
+
+local function CreateProfessionDropdown()
+  professionDropdown = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+  professionDropdown:SetSize(180, 25)
+  professionDropdown:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -35)
+
+  professionDropdownMenu = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+  professionDropdownMenu:SetSize(190, 18 + (#PM.Index.professionOrder * 24))
+  professionDropdownMenu:SetPoint("TOPLEFT", professionDropdown, "BOTTOMLEFT", 0, -2)
+  professionDropdownMenu:SetFrameStrata("DIALOG")
+  professionDropdownMenu:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true,
+    tileSize = 32,
+    edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+  })
+  professionDropdownMenu:Hide()
+
+  local previous
+  for _, professionKey in ipairs(PM.Index.professionOrder) do
+    local profession = PM.Data.professions[professionKey]
+    if profession then
+      local checkbox = CreateFrame("CheckButton", nil, professionDropdownMenu, "UICheckButtonTemplate")
+      checkbox:SetSize(20, 20)
+      checkbox:SetChecked(IsProfessionSelected(professionKey))
+
+      if previous then
+        checkbox:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -4)
+      else
+        checkbox:SetPoint("TOPLEFT", professionDropdownMenu, "TOPLEFT", 10, -10)
+      end
+
+      local label = professionDropdownMenu:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      label:SetPoint("LEFT", checkbox, "RIGHT", 4, 0)
+      label:SetText(profession.label)
+
+      checkbox:SetScript("OnClick", function(self)
+        professionFilterState[professionKey] = self:GetChecked()
+        SaveProfessionFilters()
+        UpdateProfessionDropdownText()
+        PM.UpdateUIFrame()
+      end)
+
+      professionCheckboxes[professionKey] = checkbox
+      previous = checkbox
+    end
+  end
+
+  professionDropdown:SetScript("OnClick", function()
+    if professionDropdownMenu:IsShown() then
+      professionDropdownMenu:Hide()
+    else
+      professionDropdownMenu:Show()
+    end
   end)
 
-  return label
+  UpdateProfessionDropdownText()
 end
 
-local lastFilterLabel
-for _, categoryKey in ipairs(PM.Index.categoryOrder) do
-  lastFilterLabel = CreateFilterButton(categoryKey, lastFilterLabel)
+local function CreateOldRecipesCheckbox()
+  oldRecipesCheckbox = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+  oldRecipesCheckbox:SetSize(20, 20)
+  oldRecipesCheckbox:SetPoint("LEFT", professionDropdown, "RIGHT", 14, 0)
+  oldRecipesCheckbox:SetChecked(ShouldShowOldRecipes())
+
+  local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  label:SetPoint("LEFT", oldRecipesCheckbox, "RIGHT", 4, 0)
+  label:SetText("Show old recipes")
+
+  oldRecipesCheckbox:SetScript("OnClick", function(self)
+    PM.GetOptions().showOldRecipes = self:GetChecked()
+    PM.UpdateUIFrame()
+  end)
 end
+
+CreateProfessionDropdown()
+CreateOldRecipesCheckbox()
 
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
 scrollFrame:SetSize(680, 365)
@@ -425,7 +578,14 @@ local function UpdateSummary(rows)
 end
 
 function PM.UpdateUIFrame()
+  PM.EnsureIndexes()
+
   ClearUIElements()
+  SetDefaultProfessionFilters()
+  UpdateProfessionCheckboxes()
+  if oldRecipesCheckbox then
+    oldRecipesCheckbox:SetChecked(ShouldShowOldRecipes())
+  end
 
   if not IsAuctionatorReady() then
     summaryText:SetText(ColorText("Auctionator required", COLORS.red))
@@ -478,6 +638,6 @@ end)
 
 SLASH_PROSPECTMATE1 = "/prospectmate"
 SlashCmdList["PROSPECTMATE"] = function()
-  PM.UpdateUIFrame()
   frame:Show()
+  PM.UpdateUIFrame()
 end

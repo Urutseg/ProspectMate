@@ -3,28 +3,59 @@ local addonName, addon = ...
 local PM = addon
 _G.ProspectMate = PM
 
-PM.DB_VERSION = 2
+PM.DB_VERSION = 3
 PM.SESSION_TIMEOUT = 2.5
 
 PM.Data = {
   spells = {
-    374627, -- Dragon Isles Prospecting
-    395696, -- Dragon Isles Crushing
-    382981, -- Dragon Isles Milling
-    376562, -- Dragon Isles Unravelling
-    1231127, -- Midnight Prospecting
-    1231132, -- Midnight Crushing
-    1269575, -- Midnight Milling
+    { id = 374627, profession = "jewelcrafting", legacy = true }, -- Dragon Isles Prospecting
+    { id = 395696, profession = "jewelcrafting", legacy = true }, -- Dragon Isles Crushing
+    { id = 382981, profession = "inscription", legacy = true }, -- Dragon Isles Milling
+    { id = 376562, profession = "tailoring", legacy = true }, -- Dragon Isles Unravelling
+    { id = 1231127, profession = "jewelcrafting" }, -- Midnight Prospecting
+    { id = 1231132, profession = "jewelcrafting" }, -- Midnight Crushing
+    { id = 1269575, profession = "inscription" }, -- Midnight Milling
+    { id = 1259655, profession = "cooking" }, -- Thalassian Filet
+    { id = 1229930, profession = "engineering" }, -- Recycling
+  },
+  professions = {
+    jewelcrafting = {
+      label = "Jewelcrafting",
+      skillLineID = 755,
+      recipeSpells = { 1231127, 1231132, 374627, 395696 },
+    },
+    inscription = {
+      label = "Inscription",
+      skillLineID = 773,
+      recipeSpells = { 1269575, 382981 },
+    },
+    cooking = {
+      label = "Cooking",
+      skillLineID = 185,
+      recipeSpells = { 1259655 },
+    },
+    engineering = {
+      label = "Engineering",
+      skillLineID = 202,
+      recipeSpells = { 1229930 },
+    },
+    tailoring = {
+      label = "Tailoring",
+      skillLineID = 197,
+      recipeSpells = { 376562 },
+      legacy = true,
+    },
   },
   categories = {
     ores = {
       label = "Ore",
+      profession = "jewelcrafting",
       items = {
-        192880, -- Crumbled Stone
-        190395, 190396, 190394, -- Serevite Ore
-        189143, 188658, 190311, -- Draconium Ore
-        190312, 190313, 190314, -- Khaz'gorite Ore
-        194545, -- Prismatic Ore
+        { id = 192880, legacy = true }, -- Crumbled Stone
+        { id = 190395, legacy = true }, { id = 190396, legacy = true }, { id = 190394, legacy = true }, -- Serevite Ore
+        { id = 189143, legacy = true }, { id = 188658, legacy = true }, { id = 190311, legacy = true }, -- Draconium Ore
+        { id = 190312, legacy = true }, { id = 190313, legacy = true }, { id = 190314, legacy = true }, -- Khaz'gorite Ore
+        { id = 194545, legacy = true }, -- Prismatic Ore
         237359, 237361, -- Refulgent Copper Ore
         237362, 237363, -- Umbral Tin Ore
         237364, 237365, -- Brilliant Silver Ore
@@ -33,29 +64,29 @@ PM.Data = {
     },
     herbs = {
       label = "Herbs",
+      profession = "inscription",
       items = {
-        191460, 191461, 191462, -- Hochenblume
-        191470, 191471, 191472, -- Writhebark
-        191467, 191468, 191469, -- Bubble Poppy
-        191464, 191465, 191466, -- Saxifrage
+        { id = 191460, legacy = true }, { id = 191461, legacy = true }, { id = 191462, legacy = true }, -- Hochenblume
+        { id = 191470, legacy = true }, { id = 191471, legacy = true }, { id = 191472, legacy = true }, -- Writhebark
+        { id = 191467, legacy = true }, { id = 191468, legacy = true }, { id = 191469, legacy = true }, -- Bubble Poppy
+        { id = 191464, legacy = true }, { id = 191465, legacy = true }, { id = 191466, legacy = true }, -- Saxifrage
         236761, 236767, -- Tranquility Bloom
         236776, 236777, -- Argentleaf
-        236774, 236775, -- Azeroot
         236778, 236779, -- Mana Lily
         236770, 236771, -- Sanguithorn
-        236780, -- Nocturnal Lotus
       },
     },
     gems = {
       label = "Gems",
+      profession = "jewelcrafting",
       items = {
-        192849, 192850, 192851, -- Eternity Amber
-        192837, 192838, 192839, -- Queen's Ruby
-        192856, 192857, 192858, -- Malygite
-        192866, 192867, 192868, -- Nozdorite
-        192862, 192863, 192865, -- Neltharite
-        192852, 192853, 192855, -- Alexstraszite
-        192859, 192860, 192861, -- Ysemerald
+        { id = 192849, legacy = true }, { id = 192850, legacy = true }, { id = 192851, legacy = true }, -- Eternity Amber
+        { id = 192837, legacy = true }, { id = 192838, legacy = true }, { id = 192839, legacy = true }, -- Queen's Ruby
+        { id = 192856, legacy = true }, { id = 192857, legacy = true }, { id = 192858, legacy = true }, -- Malygite
+        { id = 192866, legacy = true }, { id = 192867, legacy = true }, { id = 192868, legacy = true }, -- Nozdorite
+        { id = 192862, legacy = true }, { id = 192863, legacy = true }, { id = 192865, legacy = true }, -- Neltharite
+        { id = 192852, legacy = true }, { id = 192853, legacy = true }, { id = 192855, legacy = true }, -- Alexstraszite
+        { id = 192859, legacy = true }, { id = 192860, legacy = true }, { id = 192861, legacy = true }, -- Ysemerald
         242553, 242723, -- Sanguine Garnet
         242554, 242722, -- Amani Lapis
         242607, 242720, -- Harandar Peridot
@@ -68,6 +99,7 @@ PM.Data = {
     },
     cloth = {
       label = "Cloth",
+      profession = "tailoring",
       legacy = true,
       items = {
         193922, -- Wildercloth
@@ -77,6 +109,55 @@ PM.Data = {
         193925, -- Singed Wildercloth
       },
     },
+    fish = {
+      label = "Fish",
+      profession = "cooking",
+      items = {
+        238371, -- Arcane Wyrmfish
+        238377, -- Blood Hunter
+        238369, -- Bloomtail Minnow
+        238383, -- Eversong Trout
+        238375, -- Fungalskin Pike
+        238382, -- Gore Guppy
+        238381, -- Hollow Grouper
+        238366, -- Lynxfish
+        238376, -- Lucky Loa
+        238380, -- Null Voidfish
+        238373, -- Ominous Octopus
+        238372, -- Restored Songfish
+        238367, -- Root Crab
+        238370, -- Shimmer Spinefish
+        238378, -- Shimmersiren
+        238365, -- Sin'dorei Swarmer
+        238384, -- Sunwell Fish
+        238374, -- Tender Lumifin
+        238368, -- Twisted Tetra
+        238379, -- Warping Wise
+      },
+    },
+    recycling = {
+      label = "Recycling",
+      profession = "engineering",
+      items = {
+        239700, 239701, -- Bright Linen Bolt
+        245807, 245808, -- Powder Pigment
+        238197, 238198, -- Refulgent Copper Ingot
+        243574, 243575, -- Song Gear
+        239702, 239703, -- Imbued Bright Linen Bolt
+        243576, 243577, -- Soul Sprocket
+        238202, 238203, -- Gloaming Alloy
+        238204, 238205, -- Sterling Alloy
+      },
+    },
+  },
+  resultItems = {
+    245807, 245808, -- Powder Pigment
+    245803, 245804, -- Argentleaf Pigment
+    245866, 245867, -- Mana Lily Pigment
+    245864, 245865, -- Sanguithorn Pigment
+    243581, 243582, -- Evercore
+    243578, 243579, -- Aetherlume
+    253403, -- Thalassian Fillet
   },
 }
 
@@ -84,31 +165,128 @@ PM.State = {
   timer = nil,
   active = false,
   preCraftCounts = {},
+  preResultCounts = {},
   results = {},
 }
 
 PM.Index = {
+  ready = false,
   trackedSpells = {},
   trackedReagents = {},
+  trackedResults = {},
   categoryByItemID = {},
-  categoryOrder = { "ores", "herbs", "gems", "cloth" },
+  professionByItemID = {},
+  legacyByItemID = {},
+  spellProfessionByID = {},
+  spellLegacyByID = {},
+  categoryOrder = { "ores", "herbs", "gems", "fish", "recycling", "cloth" },
+  professionOrder = { "jewelcrafting", "inscription", "cooking", "engineering", "tailoring" },
 }
 
 local function AddSetIndex(destination, values)
   for _, value in ipairs(values) do
-    destination[value] = true
+    local id = type(value) == "table" and value.id or value
+    destination[id] = true
   end
 end
 
 function PM.BuildIndexes()
+  PM.Index.trackedSpells = {}
+  PM.Index.trackedReagents = {}
+  PM.Index.trackedResults = {}
+  PM.Index.categoryByItemID = {}
+  PM.Index.professionByItemID = {}
+  PM.Index.legacyByItemID = {}
+  PM.Index.spellProfessionByID = {}
+  PM.Index.spellLegacyByID = {}
+
   AddSetIndex(PM.Index.trackedSpells, PM.Data.spells)
+  AddSetIndex(PM.Index.trackedResults, PM.Data.resultItems)
+
+  for _, spell in ipairs(PM.Data.spells) do
+    local spellID = type(spell) == "table" and spell.id or spell
+    PM.Index.spellProfessionByID[spellID] = type(spell) == "table" and spell.profession or nil
+    PM.Index.spellLegacyByID[spellID] = type(spell) == "table" and spell.legacy == true or false
+  end
 
   for categoryKey, category in pairs(PM.Data.categories) do
     for _, itemID in ipairs(category.items) do
-      PM.Index.trackedReagents[itemID] = true
-      PM.Index.categoryByItemID[itemID] = categoryKey
+      local item = type(itemID) == "table" and itemID or { id = itemID }
+      PM.Index.trackedReagents[item.id] = true
+      PM.Index.categoryByItemID[item.id] = categoryKey
+      PM.Index.professionByItemID[item.id] = category.profession
+      PM.Index.legacyByItemID[item.id] = category.legacy == true or item.legacy == true
     end
   end
+
+  PM.Index.ready = true
+end
+
+function PM.EnsureIndexes()
+  if not PM.Index.ready then
+    PM.BuildIndexes()
+  end
+end
+
+local function IsSpellKnown(spellID)
+  if C_SpellBook and C_SpellBook.IsSpellKnown then
+    local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID)
+    if ok and known then
+      return true
+    end
+
+    ok, known = pcall(C_SpellBook.IsSpellKnown, spellID, true)
+    return ok and known == true
+  end
+
+  if IsPlayerSpell then
+    local ok, known = pcall(IsPlayerSpell, spellID)
+    return ok and known == true
+  end
+
+  return false
+end
+
+function PM.CharacterKnowsProfessionRecipe(professionKey, includeLegacy)
+  PM.EnsureIndexes()
+
+  local profession = PM.Data.professions[professionKey]
+  if not profession then
+    return false
+  end
+
+  for _, spellID in ipairs(profession.recipeSpells or {}) do
+    if (includeLegacy or not PM.Index.spellLegacyByID[spellID]) and IsSpellKnown(spellID) then
+      return true
+    end
+  end
+
+  return false
+end
+
+function PM.CharacterHasProfession(professionKey)
+  local profession = PM.Data.professions[professionKey]
+  if not profession or not profession.skillLineID or not GetProfessions or not GetProfessionInfo then
+    return false
+  end
+
+  local ok, prof1, prof2, archaeology, fishing, cooking = pcall(GetProfessions)
+  if not ok then
+    return false
+  end
+
+  local indexes = { prof1, prof2, archaeology, fishing, cooking }
+  for indexPosition = 1, 5 do
+    local index = indexes[indexPosition]
+    if index then
+      local infoOk, name, icon, skillLevel, maxSkillLevel, numAbilities, spellOffset, skillLineID = pcall(GetProfessionInfo, index)
+      if skillLineID == profession.skillLineID then
+        return true
+      end
+    end
+  end
+
+  return false
 end
 
 function PM.GetItemCount(itemID)
@@ -165,21 +343,30 @@ local function EnsureDB()
   local migrated = {
     version = PM.DB_VERSION,
     reagents = {},
+    options = {},
   }
 
-  for reagentID, legacyResults in pairs(SmartProspectorDB) do
-    if type(reagentID) == "number" and type(legacyResults) == "table" then
-      migrated.reagents[reagentID] = {
-        consumed = tonumber(legacyResults[reagentID]) or 0,
-        results = {},
-      }
+  if type(SmartProspectorDB.reagents) == "table" then
+    migrated.reagents = SmartProspectorDB.reagents
+  else
+    for reagentID, legacyResults in pairs(SmartProspectorDB) do
+      if type(reagentID) == "number" and type(legacyResults) == "table" then
+        migrated.reagents[reagentID] = {
+          consumed = tonumber(legacyResults[reagentID]) or 0,
+          results = {},
+        }
 
-      for itemID, quantity in pairs(legacyResults) do
-        if itemID ~= reagentID and type(itemID) == "number" then
-          migrated.reagents[reagentID].results[itemID] = tonumber(quantity) or 0
+        for itemID, quantity in pairs(legacyResults) do
+          if itemID ~= reagentID and type(itemID) == "number" then
+            migrated.reagents[reagentID].results[itemID] = tonumber(quantity) or 0
+          end
         end
       end
     end
+  end
+
+  if type(SmartProspectorDB.options) == "table" then
+    migrated.options = SmartProspectorDB.options
   end
 
   SmartProspectorDB = migrated
@@ -194,13 +381,44 @@ function PM.ResetDB()
   SmartProspectorDB = {
     version = PM.DB_VERSION,
     reagents = {},
+    options = type(SmartProspectorDB) == "table" and SmartProspectorDB.options or {},
   }
 end
 
+function PM.GetOptions()
+  EnsureDB()
+  if type(SmartProspectorDB.options) ~= "table" then
+    SmartProspectorDB.options = {}
+  end
+
+  return SmartProspectorDB.options
+end
+
+function PM.ShouldTrackSpell(spellID)
+  PM.EnsureIndexes()
+
+  local options = PM.GetOptions()
+  return PM.Index.trackedSpells[spellID] == true and (options.showOldRecipes == true or not PM.Index.spellLegacyByID[spellID])
+end
+
 local function GetTrackedReagentCounts()
+  PM.EnsureIndexes()
+
   local counts = {}
 
   for itemID in pairs(PM.Index.trackedReagents) do
+    counts[itemID] = PM.GetItemCount(itemID)
+  end
+
+  return counts
+end
+
+local function GetTrackedResultCounts()
+  PM.EnsureIndexes()
+
+  local counts = {}
+
+  for itemID in pairs(PM.Index.trackedResults) do
     counts[itemID] = PM.GetItemCount(itemID)
   end
 
@@ -220,11 +438,34 @@ local function FindConsumedItems(oldCounts, newCounts)
   return consumedItems
 end
 
+local function FindProducedItems(oldCounts, newCounts)
+  local producedItems = {}
+
+  for itemID, newCount in pairs(newCounts) do
+    local oldCount = oldCounts[itemID] or 0
+    if newCount > oldCount then
+      producedItems[itemID] = newCount - oldCount
+    end
+  end
+
+  return producedItems
+end
+
+local function MergeProducedItems()
+  local postResultCounts = GetTrackedResultCounts()
+  local producedItems = FindProducedItems(PM.State.preResultCounts, postResultCounts)
+
+  for itemID, quantity in pairs(producedItems) do
+    PM.State.results[itemID] = math.max(PM.State.results[itemID] or 0, quantity)
+  end
+end
+
 local function CommitSession()
   local postCraftCounts = GetTrackedReagentCounts()
   local consumedItems = FindConsumedItems(PM.State.preCraftCounts, postCraftCounts)
 
   EnsureDB()
+  MergeProducedItems()
 
   for consumedItemID, consumedItemCount in pairs(consumedItems) do
     local row = SmartProspectorDB.reagents[consumedItemID]
@@ -247,6 +488,7 @@ local function CommitSession()
   PM.State.timer = nil
   PM.State.active = false
   PM.State.preCraftCounts = {}
+  PM.State.preResultCounts = {}
   PM.State.results = {}
 end
 
@@ -268,10 +510,11 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
   if event == "TRADE_SKILL_CRAFT_BEGIN" then
     local spellID = ...
-    PM.State.active = PM.Index.trackedSpells[spellID] == true
+    PM.State.active = PM.ShouldTrackSpell(spellID)
 
     if PM.State.active and not PM.State.timer then
       PM.State.preCraftCounts = GetTrackedReagentCounts()
+      PM.State.preResultCounts = GetTrackedResultCounts()
     end
     return
   end
@@ -288,7 +531,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
   if event == "UNIT_SPELLCAST_SUCCEEDED" then
     local unitTarget, _, spellID = ...
-    if unitTarget ~= "player" or not PM.State.active or not PM.Index.trackedSpells[spellID] then
+    if unitTarget ~= "player" or not PM.State.active or not PM.ShouldTrackSpell(spellID) then
       return
     end
 
