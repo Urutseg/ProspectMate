@@ -42,7 +42,7 @@ PM.Data = {
         236776, 236777, -- Argentleaf
         236774, 236775, -- Azeroot
         236778, 236779, -- Mana Lily
-        236771, -- Sanguithorn
+        236770, 236771, -- Sanguithorn
         236780, -- Nocturnal Lotus
       },
     },
