@@ -147,6 +147,39 @@ PM.Data = {
         243576, 243577, -- Soul Sprocket
         238202, 238203, -- Gloaming Alloy
         238204, 238205, -- Sterling Alloy
+        245803, 245804, -- Argentleaf Pigment
+        245801, 245802, -- Munsell Ink
+        245805, 245806, -- Sienna Ink
+        245764, 245765, -- Codified Azeroot
+        245766, 245767, -- Soul Cipher
+        239198, 239200, -- Arcanoweave Bolt
+        239201, 239202, -- Sunfire Silk Bolt
+        240164, 240165, -- Sunfire Silk Lining
+        240166, 240167, -- Arcanoweave Lining
+        244631, 244632, -- Scalewoven Hide
+        244633, 244634, -- Infused Scalewoven Hide
+        244635, 244636, -- Sin'dorei Armor Banding
+        244637, 244638, -- Silvermoon Weapon Wrap
+        244674, 244675, -- Devouring Banding
+        244603, 244604, -- Blessed Pango Charm
+        244607, 244608, -- Primal Spore Binding
+        245781, 245782, -- Thalassian Missive of the Aurora
+        245783, 245784, -- Thalassian Missive of the Feverflare
+        245785, 245786, -- Thalassian Missive of the Fireflash
+        245787, 245788, -- Thalassian Missive of the Harmonious
+        245789, 245790, -- Thalassian Missive of the Peerless
+        245791, 245792, -- Thalassian Missive of the Quickblade
+        245814, 245815, -- Thalassian Missive of Ingenuity
+        245816, 245817, -- Thalassian Missive of Resourcefulness
+        245818, 245819, -- Thalassian Missive of Multicraft
+        245820, 245821, -- Thalassian Missive of Crafting Speed
+        245822, 245823, -- Thalassian Missive of Finesse
+        245824, 245825, -- Thalassian Missive of Perception
+        245826, 245827, -- Thalassian Missive of Deftness
+        245871, 245872, -- Darkmoon Sigil: Blood
+        245873, 245874, -- Darkmoon Sigil: Void
+        245875, 245876, -- Darkmoon Sigil: Hunt
+        245877, 245878, -- Darkmoon Sigil: Rot
       },
     },
   },
@@ -164,6 +197,9 @@ PM.Data = {
 PM.State = {
   timer = nil,
   active = false,
+  activeSpellID = nil,
+  capturedSpellID = nil,
+  capturedReagents = {},
   preCraftCounts = {},
   preResultCounts = {},
   results = {},
@@ -401,16 +437,95 @@ function PM.ShouldTrackSpell(spellID)
   return PM.Index.trackedSpells[spellID] == true and (options.showOldRecipes == true or not PM.Index.spellLegacyByID[spellID])
 end
 
-local function GetTrackedReagentCounts()
+local function AddCapturedReagent(itemID)
+  PM.EnsureIndexes()
+
+  if itemID and PM.Index.trackedReagents[itemID] then
+    PM.State.capturedReagents[itemID] = true
+
+    if PM.State.active and PM.State.preCraftCounts[itemID] == nil then
+      PM.State.preCraftCounts[itemID] = PM.GetItemCount(itemID)
+    end
+  end
+end
+
+local function GetItemIDFromItemLocation(itemLocation)
+  if not itemLocation then
+    return nil
+  end
+
+  if C_Item and C_Item.GetItemID then
+    local ok, itemID = pcall(C_Item.GetItemID, itemLocation)
+    if ok and itemID then
+      return itemID
+    end
+  end
+
+  if itemLocation.GetItemID then
+    local ok, itemID = pcall(itemLocation.GetItemID, itemLocation)
+    if ok and itemID then
+      return itemID
+    end
+  end
+
+  return nil
+end
+
+local function CaptureCraftingReagents(recipeSpellID, craftingReagents)
+  if not PM.ShouldTrackSpell(recipeSpellID) then
+    return
+  end
+
+  if not PM.State.timer and PM.State.capturedSpellID ~= recipeSpellID then
+    PM.State.capturedReagents = {}
+    PM.State.capturedSpellID = recipeSpellID
+  end
+
+  if type(craftingReagents) ~= "table" then
+    return
+  end
+
+  for _, reagentInfo in ipairs(craftingReagents) do
+    local reagent = reagentInfo and (reagentInfo.reagent or reagentInfo)
+    AddCapturedReagent(reagent and reagent.itemID)
+  end
+end
+
+local function CaptureSalvageTarget(recipeSpellID, itemTarget)
+  if not PM.ShouldTrackSpell(recipeSpellID) then
+    return
+  end
+
+  if not PM.State.timer and PM.State.capturedSpellID ~= recipeSpellID then
+    PM.State.capturedReagents = {}
+    PM.State.capturedSpellID = recipeSpellID
+  end
+
+  AddCapturedReagent(GetItemIDFromItemLocation(itemTarget))
+end
+
+local function GetItemCounts(itemIDs)
   PM.EnsureIndexes()
 
   local counts = {}
 
-  for itemID in pairs(PM.Index.trackedReagents) do
+  for itemID in pairs(itemIDs) do
     counts[itemID] = PM.GetItemCount(itemID)
   end
 
   return counts
+end
+
+local function HasCapturedReagents()
+  return next(PM.State.capturedReagents) ~= nil
+end
+
+local function GetCraftReagentCounts()
+  if HasCapturedReagents() then
+    return GetItemCounts(PM.State.capturedReagents)
+  end
+
+  return GetItemCounts(PM.Index.trackedReagents)
 end
 
 local function GetTrackedResultCounts()
@@ -461,7 +576,7 @@ local function MergeProducedItems()
 end
 
 local function CommitSession()
-  local postCraftCounts = GetTrackedReagentCounts()
+  local postCraftCounts = GetCraftReagentCounts()
   local consumedItems = FindConsumedItems(PM.State.preCraftCounts, postCraftCounts)
 
   EnsureDB()
@@ -487,9 +602,68 @@ local function CommitSession()
 
   PM.State.timer = nil
   PM.State.active = false
+  PM.State.activeSpellID = nil
+  PM.State.capturedSpellID = nil
+  PM.State.capturedReagents = {}
   PM.State.preCraftCounts = {}
   PM.State.preResultCounts = {}
   PM.State.results = {}
+end
+
+local function StartTrackingSession(spellID)
+  if PM.State.active and PM.State.timer then
+    if not PM.State.timer:IsCancelled() then
+      PM.State.timer:Cancel()
+    end
+    CommitSession()
+  end
+
+  PM.State.active = PM.ShouldTrackSpell(spellID)
+  PM.State.activeSpellID = PM.State.active and spellID or nil
+
+  if not PM.State.active then
+    PM.State.capturedSpellID = nil
+    PM.State.capturedReagents = {}
+    return
+  end
+
+  if not PM.State.timer then
+    if PM.State.capturedSpellID and PM.State.capturedSpellID ~= spellID then
+      PM.State.capturedSpellID = nil
+      PM.State.capturedReagents = {}
+    end
+
+    PM.State.preCraftCounts = GetCraftReagentCounts()
+    PM.State.preResultCounts = GetTrackedResultCounts()
+  end
+end
+
+local function InstallCraftHooks()
+  if not hooksecurefunc or not C_TradeSkillUI then
+    return
+  end
+
+  if C_TradeSkillUI.CraftRecipe then
+    hooksecurefunc(C_TradeSkillUI, "CraftRecipe", function(recipeSpellID, numCasts, craftingReagents)
+      local reagents = craftingReagents
+      if not reagents and type(numCasts) == "table" then
+        reagents = numCasts
+      end
+
+      CaptureCraftingReagents(recipeSpellID, reagents)
+    end)
+  end
+
+  if C_TradeSkillUI.CraftSalvage then
+    hooksecurefunc(C_TradeSkillUI, "CraftSalvage", function(recipeSpellID, numCasts, itemTarget)
+      local target = itemTarget
+      if not target and type(numCasts) ~= "number" then
+        target = numCasts
+      end
+
+      CaptureSalvageTarget(recipeSpellID, target)
+    end)
+  end
 end
 
 local eventFrame = CreateFrame("Frame")
@@ -504,18 +678,14 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if loadedAddonName == addonName then
       PM.BuildIndexes()
       EnsureDB()
+      InstallCraftHooks()
     end
     return
   end
 
   if event == "TRADE_SKILL_CRAFT_BEGIN" then
     local spellID = ...
-    PM.State.active = PM.ShouldTrackSpell(spellID)
-
-    if PM.State.active and not PM.State.timer then
-      PM.State.preCraftCounts = GetTrackedReagentCounts()
-      PM.State.preResultCounts = GetTrackedResultCounts()
-    end
+    StartTrackingSession(spellID)
     return
   end
 
