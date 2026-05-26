@@ -1,0 +1,9 @@
+package-as: ProspectMate
+
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - RELEASE.md
+  - .release
+  - "*.zip"

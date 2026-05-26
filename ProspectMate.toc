@@ -4,6 +4,10 @@
 
 ## Interface: 120005
 
+## X-Curse-Project-ID: 874393
+## X-Wago-ID: RNL9kD6o
+
+
 ## Notes: Tracks prospecting, crushing, and milling results with Auctionator profitability estimates.
 
 ## SavedVariables: SmartProspectorDB
