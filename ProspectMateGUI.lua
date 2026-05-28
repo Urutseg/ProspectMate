@@ -55,6 +55,89 @@ local function GetItemDisplay(itemID)
   return itemLink or itemName or ("item:" .. tostring(itemID))
 end
 
+local function GetItemIconTexture(itemID)
+  if C_Item and C_Item.GetItemIconByID then
+    return C_Item.GetItemIconByID(itemID)
+  end
+
+  return _G.GetItemIcon and _G.GetItemIcon(itemID)
+end
+
+local function RequestItemLoad(itemID)
+  if C_Item and C_Item.RequestLoadItemDataByID then
+    pcall(C_Item.RequestLoadItemDataByID, itemID)
+  end
+end
+
+local function ShowItemTooltip(owner, itemID)
+  if not GameTooltip or not itemID then
+    return
+  end
+
+  GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+  GameTooltip:ClearLines()
+
+  local shown
+  if GameTooltip.SetItemByID then
+    shown = GameTooltip:SetItemByID(itemID)
+  end
+
+  if not shown and GameTooltip.SetHyperlink then
+    shown = GameTooltip:SetHyperlink("item:" .. tostring(itemID))
+  end
+
+  GameTooltip:AddLine(" ")
+  GameTooltip:AddLine("Inventory: " .. PM.GetItemCount(itemID), 0.75, 0.75, 0.75)
+  GameTooltip:Show()
+end
+
+local function HideItemTooltip()
+  if GameTooltip then
+    GameTooltip:Hide()
+  end
+end
+
+local function CreateItemHoverFrame(parent, itemID, width, height)
+  RequestItemLoad(itemID)
+
+  local hoverFrame = TrackElement(CreateFrame("Frame", nil, parent))
+  hoverFrame:SetSize(width, height)
+  hoverFrame:EnableMouse(true)
+  hoverFrame:SetScript("OnEnter", function(self)
+    ShowItemTooltip(self, itemID)
+  end)
+  hoverFrame:SetScript("OnLeave", HideItemTooltip)
+
+  return hoverFrame
+end
+
+local function AddItemIcon(parent, itemID, size)
+  local border = TrackElement(parent:CreateTexture(nil, "BACKGROUND"))
+  border:SetSize(size + 2, size + 2)
+  border:SetColorTexture(0, 0, 0, 0.55)
+
+  local icon = TrackElement(parent:CreateTexture(nil, "ARTWORK"))
+  icon:SetSize(size, size)
+  icon:SetTexture(GetItemIconTexture(itemID) or "Interface\\Icons\\INV_Misc_QuestionMark")
+  icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+  if _G.Item and _G.Item.CreateFromItemID then
+    local item = _G.Item:CreateFromItemID(itemID)
+    if item and item.ContinueOnItemLoad then
+      item:ContinueOnItemLoad(function()
+        if icon and icon.SetTexture then
+          icon:SetTexture(GetItemIconTexture(itemID) or "Interface\\Icons\\INV_Misc_QuestionMark")
+        end
+      end)
+    end
+  end
+
+  border:SetPoint("TOPLEFT", icon, "TOPLEFT", -1, 1)
+  border:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
+
+  return icon
+end
+
 local function GetCategory(itemID)
   PM.EnsureIndexes()
 
@@ -466,9 +549,15 @@ local function AddResultLines(parent, row, startY)
       resultText = resultText .. "  " .. ColorText(PM.FormatMoney(result.price) .. " each", COLORS.gray)
     end
 
-    local line = CreateText(parent, "GameFontHighlightSmall")
-    line:SetPoint("TOPLEFT", parent, "TOPLEFT", ROW_PADDING, startY - ((index - 1) * RESULT_LINE_HEIGHT))
-    line:SetWidth(ROW_WIDTH - ROW_PADDING * 2)
+    local resultFrame = CreateItemHoverFrame(parent, result.itemID, ROW_WIDTH - ROW_PADDING * 2, RESULT_LINE_HEIGHT)
+    resultFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", ROW_PADDING, startY - ((index - 1) * RESULT_LINE_HEIGHT))
+
+    local icon = AddItemIcon(resultFrame, result.itemID, 14)
+    icon:SetPoint("LEFT", resultFrame, "LEFT", 0, 0)
+
+    local line = CreateText(resultFrame, "GameFontHighlightSmall")
+    line:SetPoint("LEFT", icon, "RIGHT", 5, 0)
+    line:SetWidth(ROW_WIDTH - ROW_PADDING * 2 - 22)
     line:SetJustifyH("LEFT")
     line:SetText(resultText)
   end
@@ -513,9 +602,15 @@ local function AddOpportunityRow(parent, row, yOffset)
     accent:SetColorTexture(0.45, 0.45, 0.45, 0.85)
   end
 
-  local itemText = CreateText(panel, "GameFontNormalLarge")
-  itemText:SetPoint("TOPLEFT", panel, "TOPLEFT", ROW_PADDING, -10)
-  itemText:SetWidth(315)
+  local itemFrame = CreateItemHoverFrame(panel, row.reagentID, 330, 32)
+  itemFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", ROW_PADDING, -9)
+
+  local itemIcon = AddItemIcon(itemFrame, row.reagentID, 28)
+  itemIcon:SetPoint("TOPLEFT", itemFrame, "TOPLEFT", 0, 0)
+
+  local itemText = CreateText(itemFrame, "GameFontNormalLarge")
+  itemText:SetPoint("TOPLEFT", itemIcon, "TOPRIGHT", 8, 0)
+  itemText:SetWidth(285)
   itemText:SetJustifyH("LEFT")
   itemText:SetText(GetItemDisplay(row.reagentID))
 
@@ -525,12 +620,12 @@ local function AddOpportunityRow(parent, row, yOffset)
   statusText:SetJustifyH("RIGHT")
   statusText:SetText(ColorText(status, statusColor))
 
-  local sampleText = CreateText(panel, "GameFontDisableSmall")
+  local sampleText = CreateText(itemFrame, "GameFontDisableSmall")
   sampleText:SetPoint("TOPLEFT", itemText, "BOTTOMLEFT", 0, -2)
-  sampleText:SetWidth(315)
+  sampleText:SetWidth(285)
   sampleText:SetJustifyH("LEFT")
   local priceText = row.reagentPrice and PM.FormatMoney(row.reagentPrice) .. " each" or "No reagent price"
-  sampleText:SetText("Sample: " .. row.consumed .. " consumed - " .. priceText)
+  sampleText:SetText("Sample: " .. row.consumed .. " consumed - " .. priceText .. " - Have: " .. PM.GetItemCount(row.reagentID))
 
   local profitText = row.profitPer100 and FormatSignedMoney(row.profitPer100) or "No price"
   local profitColor = row.profitPer100 and (row.profitPer100 >= 0 and COLORS.green or COLORS.red) or COLORS.gray
