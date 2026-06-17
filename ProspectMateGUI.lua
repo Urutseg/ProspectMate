@@ -6,6 +6,12 @@ local professionCheckboxes = {}
 local oldRecipesCheckbox
 local professionDropdown
 local professionDropdownMenu
+local resetMenu
+local resetMenuElements = {}
+local resetOptionChecks = {}
+local resetSelection
+local resetApplyButton
+local HideResetMenu
 
 local COLORS = {
   cyan = "ff00ccff",
@@ -380,6 +386,8 @@ local function CreateProfessionDropdown()
   end
 
   professionDropdown:SetScript("OnClick", function()
+    HideResetMenu()
+
     if professionDropdownMenu:IsShown() then
       professionDropdownMenu:Hide()
     else
@@ -406,8 +414,219 @@ local function CreateOldRecipesCheckbox()
   end)
 end
 
+HideResetMenu = function()
+  if resetMenu then
+    resetMenu:Hide()
+  end
+end
+
+local function ClearResetMenuElements()
+  for _, element in ipairs(resetMenuElements) do
+    if element.Hide then
+      element:Hide()
+    end
+    if element.SetParent then
+      element:SetParent(nil)
+    end
+  end
+
+  resetMenuElements = {}
+  resetOptionChecks = {}
+  resetSelection = nil
+  resetApplyButton = nil
+end
+
+local function TrackResetMenuElement(element)
+  table.insert(resetMenuElements, element)
+  return element
+end
+
+local function UpdateResetSelection()
+  for _, option in ipairs(resetOptionChecks) do
+    option.checkbox:SetChecked(resetSelection and option.selectionType == resetSelection.selectionType and option.id == resetSelection.id)
+  end
+
+  if resetApplyButton then
+    resetApplyButton:SetEnabled(resetSelection ~= nil)
+  end
+end
+
+local function SelectResetTarget(selectionType, id, label)
+  resetSelection = {
+    selectionType = selectionType,
+    id = id,
+    label = label,
+  }
+  UpdateResetSelection()
+end
+
+local function AddResetOption(parent, text, yOffset, indent, selectionType, id, label, fontTemplate)
+  local checkbox = TrackResetMenuElement(CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate"))
+  checkbox:SetSize(20, 20)
+  checkbox:SetPoint("TOPLEFT", parent, "TOPLEFT", indent, yOffset)
+
+  local optionLabel = TrackResetMenuElement(parent:CreateFontString(nil, "OVERLAY", fontTemplate or "GameFontHighlightSmall"))
+  optionLabel:SetPoint("LEFT", checkbox, "RIGHT", 4, 0)
+  optionLabel:SetWidth(250 - indent)
+  optionLabel:SetJustifyH("LEFT")
+  optionLabel:SetWordWrap(false)
+  optionLabel:SetText(text)
+
+  local clickTarget = TrackResetMenuElement(CreateFrame("Button", nil, parent))
+  clickTarget:SetPoint("TOPLEFT", checkbox, "TOPLEFT", 0, 0)
+  clickTarget:SetSize(292 - indent, 20)
+  clickTarget:SetScript("OnClick", function()
+    SelectResetTarget(selectionType, id, label)
+  end)
+
+  checkbox:SetScript("OnClick", function()
+    SelectResetTarget(selectionType, id, label)
+  end)
+
+  table.insert(resetOptionChecks, {
+    checkbox = checkbox,
+    selectionType = selectionType,
+    id = id,
+  })
+
+  return yOffset - 22
+end
+
+local function BuildResetProfessionRows()
+  PM.EnsureIndexes()
+
+  local rowsByProfession = {}
+
+  for reagentID, row in pairs(PM.GetReagentRows()) do
+    local professionKey = PM.Index.professionByItemID[reagentID]
+    if professionKey and row and (row.consumed or 0) > 0 then
+      rowsByProfession[professionKey] = rowsByProfession[professionKey] or {}
+      table.insert(rowsByProfession[professionKey], {
+        itemID = reagentID,
+        label = GetItemDisplay(reagentID),
+        sortName = GetItemSortName(reagentID),
+      })
+      RequestItemLoad(reagentID)
+    end
+  end
+
+  for _, rows in pairs(rowsByProfession) do
+    table.sort(rows, function(a, b)
+      return a.sortName < b.sortName
+    end)
+  end
+
+  return rowsByProfession
+end
+
+local function PopulateResetMenu()
+  ClearResetMenuElements()
+
+  local title = TrackResetMenuElement(resetMenu:CreateFontString(nil, "OVERLAY", "GameFontNormal"))
+  title:SetPoint("TOPLEFT", resetMenu, "TOPLEFT", 14, -12)
+  title:SetText("Reset saved data")
+
+  local resetAllButton = TrackResetMenuElement(CreateFrame("Button", nil, resetMenu, "UIPanelButtonTemplate"))
+  resetAllButton:SetSize(140, 22)
+  resetAllButton:SetPoint("TOPRIGHT", resetMenu, "TOPRIGHT", -12, -8)
+  resetAllButton:SetText("Reset Everything")
+  resetAllButton:SetScript("OnClick", function()
+    HideResetMenu()
+    StaticPopup_Show("PROSPECTMATE_RESET_ALL_CONFIRMATION")
+  end)
+
+  local helpText = TrackResetMenuElement(resetMenu:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"))
+  helpText:SetPoint("TOPLEFT", resetMenu, "TOPLEFT", 14, -42)
+  helpText:SetWidth(300)
+  helpText:SetJustifyH("LEFT")
+  helpText:SetText("Select a profession or one source item, then confirm.")
+
+  local scrollFrame = TrackResetMenuElement(CreateFrame("ScrollFrame", nil, resetMenu, "UIPanelScrollFrameTemplate"))
+  scrollFrame:SetSize(304, 235)
+  scrollFrame:SetPoint("TOPLEFT", resetMenu, "TOPLEFT", 12, -68)
+
+  local child = TrackResetMenuElement(CreateFrame("Frame", nil, scrollFrame))
+  child:SetSize(286, 235)
+  scrollFrame:SetScrollChild(child)
+
+  local rowsByProfession = BuildResetProfessionRows()
+  local yOffset = -4
+  local hasRows = false
+
+  for _, professionKey in ipairs(PM.Index.professionOrder) do
+    local profession = PM.Data.professions[professionKey]
+    local itemRows = rowsByProfession[professionKey]
+
+    if profession and itemRows and #itemRows > 0 then
+      hasRows = true
+      yOffset = AddResetOption(child, profession.label, yOffset, 4, "profession", professionKey, profession.label, "GameFontNormal")
+
+      for _, row in ipairs(itemRows) do
+        yOffset = AddResetOption(child, row.label, yOffset, 28, "item", row.itemID, row.label, "GameFontHighlightSmall")
+      end
+    end
+  end
+
+  if not hasRows then
+    local emptyText = TrackResetMenuElement(child:CreateFontString(nil, "OVERLAY", "GameFontDisable"))
+    emptyText:SetPoint("TOPLEFT", child, "TOPLEFT", 8, -8)
+    emptyText:SetWidth(260)
+    emptyText:SetJustifyH("LEFT")
+    emptyText:SetText("No saved sample data to reset.")
+    yOffset = -42
+  end
+
+  child:SetHeight(math.max(235, math.abs(yOffset) + 8))
+
+  resetApplyButton = TrackResetMenuElement(CreateFrame("Button", nil, resetMenu, "UIPanelButtonTemplate"))
+  resetApplyButton:SetSize(116, 24)
+  resetApplyButton:SetPoint("BOTTOMRIGHT", resetMenu, "BOTTOMRIGHT", -12, 12)
+  resetApplyButton:SetText("Reset Selected")
+  resetApplyButton:SetScript("OnClick", function()
+    if not resetSelection then
+      return
+    end
+
+    HideResetMenu()
+    if resetSelection.selectionType == "profession" then
+      StaticPopup_Show("PROSPECTMATE_RESET_PROFESSION_CONFIRMATION", resetSelection.label, nil, {
+        professionKey = resetSelection.id,
+      })
+    elseif resetSelection.selectionType == "item" then
+      StaticPopup_Show("PROSPECTMATE_RESET_ITEM_CONFIRMATION", resetSelection.label, nil, {
+        itemID = resetSelection.id,
+      })
+    end
+  end)
+
+  local cancelButton = TrackResetMenuElement(CreateFrame("Button", nil, resetMenu, "UIPanelButtonTemplate"))
+  cancelButton:SetSize(80, 24)
+  cancelButton:SetPoint("RIGHT", resetApplyButton, "LEFT", -8, 0)
+  cancelButton:SetText("Cancel")
+  cancelButton:SetScript("OnClick", HideResetMenu)
+
+  UpdateResetSelection()
+end
+
+local function CreateResetMenu()
+  resetMenu = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+  resetMenu:SetSize(340, 345)
+  resetMenu:SetPoint("BOTTOMLEFT", resetButton, "TOPLEFT", 0, 2)
+  resetMenu:SetFrameStrata("DIALOG")
+  resetMenu:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true,
+    tileSize = 32,
+    edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+  })
+  resetMenu:Hide()
+end
+
 CreateProfessionDropdown()
 CreateOldRecipesCheckbox()
+CreateResetMenu()
 
 local scrollFrame = CreateFrame("ScrollFrame", "ProspectMateScrollFrame", frame, "UIPanelScrollFrameTemplate")
 scrollFrame:SetSize(680, 365)
@@ -704,9 +923,9 @@ function PM.UpdateUIFrame()
   childFrame:SetHeight(math.max(365, math.abs(yOffset) + 20))
 end
 
-StaticPopupDialogs["PROSPECTMATE_RESET_DATA_CONFIRMATION"] = {
-  text = "All ProspectMate data will be deleted if you proceed.",
-  button1 = "Confirm",
+StaticPopupDialogs["PROSPECTMATE_RESET_ALL_CONFIRMATION"] = {
+  text = "All saved ProspectMate sample data will be deleted. Filters and options will be kept.",
+  button1 = "Reset All",
   button2 = "Cancel",
   timeout = 0,
   OnAccept = function()
@@ -717,22 +936,64 @@ StaticPopupDialogs["PROSPECTMATE_RESET_DATA_CONFIRMATION"] = {
   hideOnEscape = true,
 }
 
+StaticPopupDialogs["PROSPECTMATE_RESET_PROFESSION_CONFIRMATION"] = {
+  text = "Delete all saved ProspectMate sample data for %s?",
+  button1 = "Reset",
+  button2 = "Cancel",
+  timeout = 0,
+  OnAccept = function(self, data)
+    if data and data.professionKey then
+      PM.ResetProfessionData(data.professionKey)
+      PM.UpdateUIFrame()
+    end
+  end,
+  whileDead = true,
+  hideOnEscape = true,
+}
+
+StaticPopupDialogs["PROSPECTMATE_RESET_ITEM_CONFIRMATION"] = {
+  text = "Delete saved ProspectMate sample data for %s?",
+  button1 = "Reset",
+  button2 = "Cancel",
+  timeout = 0,
+  OnAccept = function(self, data)
+    if data and data.itemID then
+      PM.ResetItemData(data.itemID)
+      PM.UpdateUIFrame()
+    end
+  end,
+  whileDead = true,
+  hideOnEscape = true,
+}
+
 resetButton:SetScript("OnClick", function()
-  StaticPopup_Show("PROSPECTMATE_RESET_DATA_CONFIRMATION")
+  if professionDropdownMenu and professionDropdownMenu:IsShown() then
+    professionDropdownMenu:Hide()
+  end
+
+  if resetMenu:IsShown() then
+    resetMenu:Hide()
+  else
+    PopulateResetMenu()
+    resetMenu:Show()
+  end
 end)
 
 refreshButton:SetScript("OnClick", function()
+  HideResetMenu()
   PM.UpdateUIFrame()
 end)
 
 frame:SetScript("OnKeyDown", function(self, key)
   if key == "ESCAPE" then
+    HideResetMenu()
     self:Hide()
   end
 end)
 
 SLASH_PROSPECTMATE1 = "/prospectmate"
 SlashCmdList["PROSPECTMATE"] = function()
+  HideResetMenu()
   frame:Show()
   PM.UpdateUIFrame()
 end

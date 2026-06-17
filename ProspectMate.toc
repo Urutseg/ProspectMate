@@ -1,8 +1,8 @@
 ## Title: ProspectMate
-## Version: 2.0.2
+## Version: 2.0.3
 ## Author: Mor'Qua Devs
 
-## Interface: 120005
+## Interface: 120007
 
 ## X-Curse-Project-ID: 874393
 ## X-Wago-ID: RNL9kD6o

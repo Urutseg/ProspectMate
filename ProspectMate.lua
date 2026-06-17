@@ -421,6 +421,33 @@ function PM.ResetDB()
   }
 end
 
+function PM.ResetProfessionData(professionKey)
+  EnsureDB()
+  PM.EnsureIndexes()
+
+  local deleted = 0
+  for reagentID in pairs(SmartProspectorDB.reagents) do
+    if PM.Index.professionByItemID[reagentID] == professionKey then
+      SmartProspectorDB.reagents[reagentID] = nil
+      deleted = deleted + 1
+    end
+  end
+
+  return deleted
+end
+
+function PM.ResetItemData(itemID)
+  EnsureDB()
+  PM.EnsureIndexes()
+
+  if SmartProspectorDB.reagents[itemID] == nil then
+    return 0
+  end
+
+  SmartProspectorDB.reagents[itemID] = nil
+  return 1
+end
+
 function PM.GetOptions()
   EnsureDB()
   if type(SmartProspectorDB.options) ~= "table" then

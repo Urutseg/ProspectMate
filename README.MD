@@ -9,7 +9,7 @@ ProspectMate is a World of Warcraft addon that tracks profession material conver
 - Filter displayed data by profession with a multi-select drop-down.
 - Keep older expansion recipes hidden by default, with an opt-in option to show old recipes.
 - Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for pricing and profit data.
-- User-friendly interface for easy management and tracking.
+- User-friendly interface for easy management, tracking, and scoped data resets.
 
 ## Development
 
@@ -30,8 +30,11 @@ This addon was developed with the assistance of an AI language model provided by
 4. Enable "Show old recipes" if you want to include legacy expansion data such as Dragonflight ore, herb, gem, or cloth conversions.
 5. The total return and profitability will be calculated based on the displayed results.
 6. Note: ProspectMate does not account for any profession attributes. It tracks your specific outcomes as they are.
-7. If your profession attributes change (e.g., skill level, inspiration, resourcefulness), click the "Reset Data" button to start from scratch and obtain relevant data again.
-8. Requires the Auctionator addon for pricing and profit data. Make sure to have Auctionator installed and enabled for accurate calculations.
+7. If your profession attributes change (e.g., skill level, inspiration, resourcefulness), use "Reset Data" to clear only the affected samples before collecting new data.
+8. Choose "Reset Everything" to clear all saved sample data while keeping your options and filters.
+9. In the "Reset Data" picker, select a profession to clear all saved samples for that profession.
+10. In the same picker, select one source item under its profession to clear only that item's saved sample data.
+11. Requires the Auctionator addon for pricing and profit data. Make sure to have Auctionator installed and enabled for accurate calculations.
 
 ## License
 
